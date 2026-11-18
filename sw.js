@@ -1,5 +1,5 @@
 // Bump VERSION on every release so phones pick up the new build.
-const VERSION = 'v9';
+const VERSION = 'v10';
 const CACHE = 'sphere-league-' + VERSION;
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
 

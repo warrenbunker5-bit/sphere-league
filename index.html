@@ -515,19 +515,19 @@ cv.addEventListener('pointerdown',e=>{
   if(G.cut){G.cut=G.cuts.shift()||null;return;}
   for(let i=buttons.length-1;i>=0;i--){const b=buttons[i];if(pt.x>=b.x&&pt.x<b.x+b.w&&pt.y>=b.y&&pt.y<b.y+b.h){sfx('blip');b.fn();return;}}
   const st=G.state;
-  if(G.menu){G.menu=null;if(G.state==='aim')G.state='play';return;}
+  if(G.menu){G.menu=null;return;}
   if(pt.y>=PANEL||pt.y<15)return;const wp=s2w(pt);
-  if(!['play','paused','encounter'].includes(st)||!inSphere(wp))return;
+  if(!['play','paused','encounter','aim'].includes(st)||!inSphere(wp))return;
   const c=G.carrier,homeBall=c&&c.team===0;
   const p=homeAt(wp,10/G.cam.z);
   if(p){G.drag={p,sx:wp.x,sy:wp.y,x:wp.x,y:wp.y};return;}
   if(homeBall&&nearGoal(wp)){
     if(st==='paused'){G.queued.shot=!G.queued.shot;G.queued.pass=null;}
-    else if(shotRange(c)){if(st==='encounter')G.menu='shot';else openAim(c);}
-    else popup('TOO FAR',c.x,c.y-14,'#ff8a8a');
+    else if(st==='encounter'){if(shotRange(c))G.menu='shot';else popup('TOO FAR',c.x,c.y-14,'#ff8a8a');}
+    else openAim(c);
     return;
   }
-  if(st==='encounter')return;
+  if(st==='encounter'||st==='aim')return;
   const q=clampSphere(wp.x,wp.y,7);
   if(homeBall){c.target=q;if(st==='play')G.steer=true;}
   else{let n=null,nd=999;for(const m of teamOf(0)){if(m.isGK)continue;const d=dist(m,q);if(d<nd){nd=d;n=m;}}if(n){n.run=q;n.runHold=0;}}
@@ -545,13 +545,14 @@ cv.addEventListener('pointerup',()=>{
   if(!moved){
     if(homeBall&&p!==c){
       if(st==='paused'){G.queued.pass=(G.queued.pass&&G.queued.pass.p===p)?null:{p,t:0,mv:null};G.queued.shot=false;}
-      else if(st==='encounter')doPass(c,p,G.enc,canUse(c,G.passMove)?G.passMove:null);
+      else if(st==='encounter'||st==='aim')doPass(c,p,G.enc||[],canUse(c,G.passMove)?G.passMove:null);
       else if(st==='play')doPass(c,p,[],null);
     }
   }else if(st!=='encounter'){if(p===c)c.target=q;else{p.run=q;p.runHold=0;}}
   if(G.state==='paused')refreshPlanOdds();
 });
-function openAim(c){if(movesOfType(c,'shot').length){G.state='aim';G.enc=[];G.aiTackle=null;G.menu='shot';}else doShot(c,[],null);}
+function openAim(c){G.state='aim';G.enc=[];G.aiTackle=null;G.menu=null;G.pickPass=false;G.passMove=null;c.target=null;G.steer=false;
+  G.odds={pass:passOddsMap(c,[],null),shot:shotRange(c)?odds(()=>simShot(c,[]),100):null};}
 function refreshPlanOdds(){
   const c=G.carrier;G.odds=null;if(!c||c.team!==0)return;
   G.odds={pass:passOddsMap(c,[],G.queued.pass?G.queued.pass.mv:null),shot:shotRange(c)?odds(()=>simShot(c,[]),80):null};
@@ -920,8 +921,13 @@ function drawPanel(){
     if(G.menu==='break')sheet('BREAK',moveOpts(c,'break',id=>doBreak(c,G.enc,id,G.aiTackle)));
     if(G.menu==='pass')sheet('PICK A PASS, THEN TAP A TEAMMATE',moveOpts(c,'pass',id=>{G.passMove=id;G.pickPass=true;G.menu=null;G.odds.pass=passOddsMap(c,G.enc,id);}));
   }else if(st==='aim'){
-    txt('Pick your shot - the game is paused',CX,H-6,6,'#ffe066','center',{stroke:false});
-    sheet('SHOOT',moveOpts(c,'shot',id=>doShot(c,[],id)));
+    const o=G.odds,nP=movesOfType(c,'pass').length,nS=movesOfType(c,'shot').length;
+    btn(4,by,54,bh,'PASS',()=>{if(nP)G.menu='pass';else{G.pickPass=true;G.passMove=null;}},{col:G.pickPass?'#d99a2a':'#2f7ae0',sub:G.pickPass?(G.passMove?MOVES[G.passMove].name:'Basic'):(nP?nP+' MOVE'+(nP>1?'S':''):'tap a mate'),subc:'#ffffff',size:7});
+    btn(63,by,54,bh,'SHOOT',()=>{if(nS)G.menu='shot';else doShot(c,[],null);},{col:'#e0553a',sub:o.shot==null?'too far':pct(o.shot)+(nS?' +'+nS:''),disabled:o.shot==null,size:7});
+    btn(122,by,54,bh,'DRIBBLE',()=>{G.state='play';G.menu=null;G.odds=null;},{col:'#2fb36a',sub:'keep swimming',subc:'#ffffff',size:7});
+    txt(G.pickPass?'Now tap a teammate to pass':'Game paused - pass, shoot, or keep dribbling',CX,H-6,6,'#ffe066','center',{stroke:false});
+    if(G.menu==='shot')sheet('SHOOT',moveOpts(c,'shot',id=>doShot(c,[],id)));
+    if(G.menu==='pass')sheet('PICK A PASS, THEN TAP A TEAMMATE',moveOpts(c,'pass',id=>{G.passMove=id;G.pickPass=true;G.menu=null;G.odds.pass=passOddsMap(c,[],id);}));
   }else if(st==='defEnc'){
     const d=G.defLead;const t=movesOfType(d,'tackle');const opts=[null,...t].slice(0,3);const w=(172-(opts.length-1)*4)/opts.length;
     opts.forEach((id,i)=>{const m=id?MOVES[id]:null;btn(4+i*(w+4),by,w,bh,m?m.name.toUpperCase():'TACKLE',()=>startAiEnc(id?{p:d,id}:null),{col:m?shade(m.col,0.62):'#2f7ae0',size:m&&m.name.length>11?5.5:6.5,sub:m?(d.cd[id]>0?'ready in '+Math.ceil(d.cd[id])+'s':'SP '+spCost(d,id)+'/'+Math.floor(d.sp)+' '+'★'.repeat(rankOf(d,id))):'basic',subc:'#ffffff',subsize:5,disabled:id&&!canUse(d,id)});});
@@ -950,7 +956,7 @@ function drawPlanLayer(){
   if(G.drag){const p=G.drag.p;dash(p.x,p.y,G.drag.x,G.drag.y,'#ffffff',1.2);}
 }
 function drawOddsLabels(){
-  const st=G.state;if(!(st==='paused'||st==='encounter')||!G.odds||!G.odds.pass)return;
+  const st=G.state;if(!(st==='paused'||st==='encounter'||st==='aim')||!G.odds||!G.odds.pass)return;
   for(const [m,o] of G.odds.pass){const col=o>0.7?'#7dffb0':o>0.4?'#ffe066':'#ff8a8a';
     rrect(ctx,m.x-8,m.y-21,16,7,3.5);ctx.fillStyle='rgba(12,9,32,0.8)';ctx.fill();txt(pct(o),m.x,m.y-17.4,5.5,col,'center',{sw:0.2});}
 }
@@ -966,7 +972,7 @@ function drawEdgeMarkers(){
   if(gp.y<24){const od=shotRange(c)?pct(odds(()=>simShot(c,st==='encounter'?G.enc:[]),30)):'far';
     rrect(ctx,CX-22,29,44,11,5.5);ctx.fillStyle='rgba(12,9,32,0.85)';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=G.away.col;ctx.stroke();
     txt('▲ GOAL '+od,CX,34.6,5.4,'#ffffff','center',{sw:0.2});
-    buttons.push({x:CX-22,y:29,w:44,h:11,fn:()=>{if(st==='paused'){G.queued.shot=!G.queued.shot;G.queued.pass=null;}else if(!shotRange(c))popup('TOO FAR',c.x,c.y-14,'#ff8a8a');else if(st==='encounter')G.menu='shot';else openAim(c);}});}
+    buttons.push({x:CX-22,y:29,w:44,h:11,fn:()=>{if(st==='paused'){G.queued.shot=!G.queued.shot;G.queued.pass=null;}else if(st==='encounter'){if(shotRange(c))G.menu='shot';else popup('TOO FAR',c.x,c.y-14,'#ff8a8a');}else openAim(c);}});}
 }
 const FXDESC=id=>{const m=MOVES[id];if(m.fx)return 'Inflicts '+FX[m.fx].name+': '+FX[m.fx].desc;return {curve:'Bends around every blocker in the lane',multi:'Three hits - blasts through blockers',mirage:'Only one defender gets to tackle',drain:'Steals HP from the ball carrier'}[m.special]||(m.type==='save'?'Keeper CAT +'+m.pow:'Power +'+m.pow);};
 function pushCut(c){if(G.auto)return;c.t=0;if(!G.cut)G.cut=c;else if(G.cuts.length<3)G.cuts.push(c);}
@@ -1061,7 +1067,7 @@ function drawTitle(){
   btn(18,y+27,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   btn(18,y+2,70,22,'ROSTER',()=>{G.state='roster';},{col:'#5a4fb0',size:6.5,sub:'& MOVES',subc:'#ffe066',subsize:5});
   btn(92,y+2,70,22,'HOW TO',()=>{G.state='howto';},{col:'#5a4fb0',size:6.5,sub:'PLAY',subc:'#ffe066',subsize:5});
-  txt('PROTOTYPE v0.10',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.11',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 let rosterPlayers=null;
 function drawRoster(){
@@ -1170,7 +1176,12 @@ function render(){
   if(inGame){
     drawHUD();
     if(G.cut){drawCut();ctx.fillStyle='#120e2b';ctx.fillRect(0,PANEL,W,H-PANEL);}else drawPanel();
-    if(G.state==='paused')txt('PLANNING',CX,34,8,'#7ff0e0');
+    if(G.state==='paused'){txt('PLANNING',CX,34,8,'#7ff0e0');
+      if(!G.quitAsk)btn(W-40,29,36,12,'✕ QUIT',()=>{G.quitAsk=true;},{col:'#7a3a4a',size:5});
+      else{buttons=[];ctx.fillStyle='rgba(12,9,32,0.7)';ctx.fillRect(0,0,W,H);rrect(ctx,20,96,140,76,9);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1.4;ctx.strokeStyle='#c0485e';ctx.stroke();
+        txt('LEAVE THIS MATCH?',CX,110,9,'#ffffff');txt('It won\'t count. XP already earned',CX,124,5.4,'#cfe3ff','center',{stroke:false});txt('at halftime stays.',CX,132,5.4,'#cfe3ff','center',{stroke:false});
+        btn(28,142,58,20,'LEAVE',()=>{G.quitAsk=false;G.cut=null;G.cuts=[];G.menu=null;G.state='title';sfx('whistle');},{col:'#c0485e',size:7});
+        btn(94,142,58,20,'STAY',()=>{G.quitAsk=false;},{col:'#2fb36a',size:7});}}
     if(G.banner)banner(G.banner.t,G.banner.c,G.banner.sub);
     if(G.state==='tip'){buttons=[];const T=TIPS[G.tipKey];ctx.fillStyle='rgba(12,9,32,0.55)';ctx.fillRect(0,0,W,H);
       rrect(ctx,16,92,148,92,9);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1.4;ctx.strokeStyle='#ffd24a';ctx.stroke();

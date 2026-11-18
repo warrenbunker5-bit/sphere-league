@@ -128,6 +128,10 @@ const TEAMS={
     names:['VOSS','KANE','ORTEGA','BRANT','HOLLIS','MARSH'],moves:[[],[],['rocket'],['drain'],[],[]]},
   breakers:{style:{form:'defense',cover:'zone'},name:'Boulder Breakers',short:'BLD',col:'#e6be3a',acc:'#1b1b1b',shorts:'#2a2a2a',gk:'#4fc3f7',mult:1.0,tier:'PRO',rank:2,ai:{chase:0.9,maxCh:2,think:0.75},
     names:['STEELE','QUINN','DARBY','LOWRY','FINCH','CARSON'],moves:[['spin'],[],['hex'],[],['anchor'],['wall']]},
+  anglers:{style:{form:'counter',cover:'zone'},name:'Aurora Anglers',short:'AUR',col:'#e04a6a',acc:'#2a1830',shorts:'#2a1830',gk:'#f2d34c',mult:0.95,tier:'PRO',rank:2,ai:{chase:0.88,maxCh:2,think:0.8},
+    names:['MORROW','PACE','DIAZ','KELLER','STROM','ABARA'],moves:[['curve'],[],['rocket'],['anchor'],[],['wall']]},
+  divers:{style:{form:'balanced',cover:'man'},name:'Durango Divers',short:'DUR',col:'#3f9a4a',acc:'#f2f2e0',shorts:'#1e4a24',gk:'#ff9f2e',mult:0.88,tier:'ROOKIE',rank:1,ai:{chase:0.82,maxCh:1,think:1.0},
+    names:['BOONE','CRUZ','EMERY','HALE','RIGGS','NASH'],moves:[[],['spin'],[],['sting'],[],[]]},
   undertow:{style:{form:'attack',cover:'man'},name:'Pikes Peak Undertow',short:'PPU',col:'#8b55d6',acc:'#d9dde8',shorts:'#3a2366',gk:'#ff6f61',mult:0.9,tier:'ALL-STAR',rank:3,ai:{chase:0.92,maxCh:2,think:0.7},
     names:['SABLE','KNOX','REYES','DRAKE','VANCE','HOLT'],moves:[['toxic'],['dream'],['viper','lullaby'],['sting'],['sleeper'],['wall']]}
 };
@@ -159,7 +163,7 @@ function makePlayer(team,name,pos,st,skin,hair,hs){
     sp:0,spMax:0,spBase:24,fx:{poison:0,sleep:0,weak:0,slow:0},moves:[],uses:{},cd:{},stats:{g:0,sh:0,pa:0,tk:0,br:0,sv:0,ic:0,as:0,pr:0}};
   STAT_KEYS.forEach((k,i)=>p[k]=st[i]);p.hp=p.end;return p;
 }
-function applyLevelStats(p){STAT_KEYS.forEach((k,i)=>{p[k]=Math.round(p.base[i]*(1+GROW*(p.level-1)));});}
+function applyLevelStats(p){STAT_KEYS.forEach((k,i)=>{p[k]=Math.max(1,Math.round(p.base[i]*curveMult(p.rec,p.level,i)*posPen(p,i)));});}
 function xpFrom(p,final,win){const s=p.stats,b=p.xpBase||{};const d=k=>(s[k]||0)-(b[k]||0);
   return Math.round((d('g')*30+d('as')*12+d('sh')*4+d('pa')*6+d('tk')*10+d('br')*6+d('sv')*8+d('ic')*10+d('pr')*3+(G.score[0]-(G.xpGoalsBase||0))*4+(final?10+(win?20:0):5))*(G.away.xpMult||1));}
 function awardXP(final,win){
@@ -175,16 +179,10 @@ function awardXP(final,win){
   }
   G.xpGoalsBase=G.score[0];persist();if(ups.length)setTimeout(()=>sfx('level'),400);return ups;
 }
-function buildHome(){
-  return TEAMS.riptide.roster.map(r=>{const p=makePlayer(0,r[0],r[1],r[2],SKINS[r[3]],HAIRS[r[4]],r[5]);const sv=psave(p.name);
-    p.base=r[2].slice();p.xp=sv.xp;p.level=lvlOf(sv.xp);p.uses=sv.uses;applyLevelStats(p);
-    if(!sv.spBase){const rg={LF:[22,34],RF:[22,34],MF:[26,38],LD:[18,30],RD:[18,30],GK:[16,26]}[p.pos];sv.spBase=Math.round(rnd(rg[0],rg[1]));persist();}
-    p.spBase=sv.spBase;p.spMax=spMaxFor(p.spBase,p.level);p.sp=p.spMax;p.moveTable=r[6];p.moves=r[6].filter(m=>m[1]<=p.level).map(m=>m[0]);
-    p.learned=(SAVE.learned[p.name]||[]);p.learned.forEach(id=>{if(!p.moves.includes(id))p.moves.push(id);});return p;});
-}
+function buildHome(){initTeam();const L=SAVE.team.lineup;return SLOTS.map(slot=>makeFromRec(recOf(L[slot]),slot));}
 function setupMatch(key){
   const away=TEAMS[key];G.away=away;G.awayKey=key;
-  G.players=buildHome();
+  G.players=buildHome();G.bench=buildBench();G.seasonGame=!!G.nextSeasonGame;G.nextSeasonGame=false;G.halfView=null;G.subSel=null;
   AWAY_BASE.forEach((r,i)=>{const st=r.slice(1).map(v=>Math.round(v*away.mult+rnd(-1.5,1.5)));const p=makePlayer(1,away.names[i],r[0],st,SKINS[(i*2+key.length)%6],HAIRS[(i+key.length)%6],(i+key.length)%3);p.moves=away.moves[i].slice();p.fixedRank=away.rank;p.spBase=Math.round(rnd(20,32));p.spMax=spMaxFor(p.spBase,1+(away.rank-1)*2);p.sp=p.spMax;G.players.push(p);});
   G.score=[0,0];G.half=1;G.clock=HALF_LEN;G.mercy=false;G.beat=0;G.halfUps=[];G.marks={};G.xpGoalsBase=0;G.players.forEach(p=>{p.xpGain=0;p.xpBase={};});G.copied=[];G.why=null;G.lastPasser=null;G.poss=SHOT_CLOCK;G.popups=[];G.fxRings=[];G.flight=null;G.party=0;G.menu=null;bgCache=null;
   kickoff(0);
@@ -361,8 +359,76 @@ function finishMatch(){
   const win=G.score[0]>G.score[1];G.levelUps=[];G.unlocked=null;
   if(win&&!SAVE.beaten[G.awayKey]){SAVE.beaten[G.awayKey]=true;const nx=LADDER[LADDER.indexOf(G.awayKey)+1];if(nx&&G.awayKey!=='practice')G.unlocked=TEAMS[nx].name;}
   G.levelUps=(G.halfUps||[]).concat(awardXP(true,win));
+  if(G.seasonGame)seasonResult(G.score[0],G.score[1]);
   G.mvp=teamOf(0).reduce((a,b)=>b.xpGain>a.xpGain?b:a);
 }
+
+// =================== TEAM / ROSTER / SEASON ===================
+const CURVES={steady:{name:'Steady',desc:'Grows evenly every level'},early:{name:'Early bloomer',desc:'Big gains early, slows after LV 4'},late:{name:'Late bloomer',desc:'Slow start, explodes after LV 5'},spec:{name:'Specialist',desc:'Two stats grow fast, the rest slowly'}};
+function curveMult(rec,lv,i){const l=lv-1;switch(rec&&rec.curve){case 'early':return lv<=4?1+0.13*l:1.39+0.04*(lv-4);case 'late':return lv<=5?1+0.03*l:1.12+0.15*(lv-5);case 'spec':return (rec.keys||[]).includes(i)?1+0.12*l:1+0.045*l;default:return 1+0.08*l;}}
+const POS_T={LF:[22,20,17,15,8,22,6],RF:[22,20,17,15,8,22,6],MF:[20,23,18,22,13,14,8],LD:[18,25,21,13,22,8,10],RD:[18,25,21,13,22,8,10],GK:[14,24,8,13,10,4,20]};
+const SPEC_KEYS={LF:[5,0],RF:[5,0],MF:[3,1],LD:[4,2],RD:[4,2],GK:[6,4]};
+const SLOTS=['LF','RF','MF','LD','RD','GK'];
+const LASTN=['ALVAREZ','BRANDT','CASTILLO','DEVLIN','ESPINOZA','FLETCHER','GARZA','HOLLOWAY','IBARRA','JENSEN','KOWALSKI','LARSEN','MADDOX','NAKAMURA','OSEI','PRUITT','QUINTANA','RHODES','SANTOS','TRAN','UPTON','VALDEZ','WEBB','YATES','ZAMORA','BECKETT','CRANE','DORSEY','ELLIS','FOSTER','GRAVES','HUNT','IVERS','JUAREZ','KENT','LOWE','MENDEZ','NOLAN','ORTIZ','PRICE','ROWE','SHAW','TATE','VEGA','WOLFE','BAKER','CHO','DUFF','EZRA','FINN'];
+const TOWNS=['Golden','Boulder','Aurora','Littleton','Evergreen','Arvada','Pueblo','Fort Collins','Durango','Estes Park','Morrison','Englewood','Castle Rock','Greeley','Salida','Leadville','Brighton','Westminster'];
+const LEAGUE=['currents','divers','breakers','anglers','undertow'];
+const PRIZES={win:120,draw:40,place:[500,300,150],champ:400};
+function usedNames(){const s=new Set();Object.values(TEAMS).forEach(t=>(t.names||[]).forEach(n=>s.add(n)));TEAMS.riptide.roster.forEach(r=>s.add(r[0]));((SAVE.team&&SAVE.team.roster)||[]).forEach(r=>s.add(r.name));(SAVE.fa||[]).forEach(r=>s.add(r.name));return s;}
+function salaryFor(lv,pot){return Math.round((40+lv*25+pot*22)/5)*5;}
+function genFA(lv,pos){
+  pos=pos||['LF','RF','MF','LD','RD','GK','MF','LF','LD','RF'][(Math.random()*10)|0];
+  const used=usedNames();let name='ROOKIE';for(let k=0;k<80;k++){const n=LASTN[(Math.random()*LASTN.length)|0];if(!used.has(n)){name=n;break;}}
+  const curve=['steady','steady','early','late','late','spec'][(Math.random()*6)|0];
+  const q=rnd(0.74,1.06);const base=POS_T[pos].map(v=>Math.max(3,Math.round(v*q*rnd(0.9,1.1))));
+  const pot=clamp(Math.round((q-0.7)*11+(curve==='late'?1.6:curve==='early'?-0.4:0)+rnd(-0.6,0.6)),1,5);
+  const pool=Object.keys(MOVES).filter(id=>COPY_ROLES[MOVES[id].type].includes(pos)).sort(()=>Math.random()-0.5);
+  const n=1+((Math.random()*3)|0),mt=pool.slice(0,n).map((id,i)=>[id,i===0?1:i===1?2+((Math.random()*3)|0):4+((Math.random()*4)|0)]);
+  const id='p'+(SAVE.team?SAVE.team.nextId++:((Math.random()*1e6)|0));
+  return {id,name,pos,base,skin:(Math.random()*6)|0,hair:(Math.random()*6)|0,hs:(Math.random()*3)|0,moveTable:mt,curve,keys:SPEC_KEYS[pos],pot,town:TOWNS[(Math.random()*TOWNS.length)|0],salary:salaryFor(lv,pot),years:1+((Math.random()*3)|0),scouted:false,startXp:xpFor(lv)};
+}
+function initTeam(){
+  if(SAVE.team&&SAVE.team.roster)return;
+  const cur={NAVARRO:'steady',PIKE:'early',BELL:'steady',OKAFOR:'late',DUNBAR:'steady',RUIZ:'spec'};
+  const roster=TEAMS.riptide.roster.map((r,i)=>({id:'r'+i,name:r[0],pos:r[1],base:r[2].slice(),skin:r[3],hair:r[4],hs:r[5],moveTable:r[6],curve:cur[r[0]],keys:SPEC_KEYS[r[1]],pot:3,town:'Lakewood',salary:[110,100,120,90,90,100][i],years:[2,3,2,3,2,2][i],scouted:true}));
+  SAVE.team={roster,lineup:{LF:'r0',RF:'r1',MF:'r2',LD:'r3',RD:'r4',GK:'r5'},money:600,manuals:0,nextId:100};
+  for(const pos of ['MF','LD']){const r=genFA(1,pos);r.scouted=true;r.years=2;psave(r.name).xp=r.startXp;roster.push(r);}
+  if(!SAVE.fa)SAVE.fa=Array.from({length:8},()=>genFA(1+((Math.random()*3)|0)));
+  if(SAVE.scoutPts==null)SAVE.scoutPts=3;
+  persist();
+}
+const recOf=id=>SAVE.team.roster.find(r=>r.id===id);
+function posPen(p,i){if(!p.natural||p.natural===p.pos)return 1;if(p.pos==='GK')return i===6?0.55:0.9;if(p.natural==='GK')return 0.8;return 0.88;}
+function makeFromRec(rec,slot){
+  const p=makePlayer(0,rec.name,slot,rec.base,SKINS[rec.skin],HAIRS[rec.hair],rec.hs);p.rec=rec;p.natural=rec.pos;
+  const sv=psave(rec.name);if(!sv.xp&&rec.startXp)sv.xp=rec.startXp;
+  p.base=rec.base.slice();p.xp=sv.xp;p.level=lvlOf(sv.xp);p.uses=sv.uses;applyLevelStats(p);
+  if(!sv.spBase){const rg={LF:[22,34],RF:[22,34],MF:[26,38],LD:[18,30],RD:[18,30],GK:[16,26]}[rec.pos];sv.spBase=Math.round(rnd(rg[0],rg[1]));persist();}
+  p.spBase=sv.spBase;p.spMax=spMaxFor(p.spBase,p.level);p.sp=p.spMax;p.moveTable=rec.moveTable;p.moves=rec.moveTable.filter(m=>m[1]<=p.level).map(m=>m[0]);
+  p.learned=(SAVE.learned[p.name]||[]);p.learned.forEach(id=>{if(!p.moves.includes(id))p.moves.push(id);});return p;
+}
+function buildBench(){initTeam();const on=new Set(Object.values(SAVE.team.lineup));return SAVE.team.roster.filter(r=>!on.has(r.id)).map(r=>makeFromRec(r,r.pos));}
+// ---- season ----
+function newSeason(){const n=SAVE.season?SAVE.season.n+1:1;const table={};['riptide',...LEAGUE].forEach(k=>table[k]={w:0,d:0,l:0,gf:0,ga:0,pts:0});
+  SAVE.season={n,week:0,table,final:null,done:false,champ:false,place:0,paid:false,last:null};SAVE.scoutPts=3;persist();}
+function standings(){const t=SAVE.season.table;return Object.keys(t).sort((a,b)=>t[b].pts-t[a].pts||(t[b].gf-t[b].ga)-(t[a].gf-t[a].ga)||t[b].gf-t[a].gf);}
+function record(k,gf,ga){const r=SAVE.season.table[k];r.gf+=gf;r.ga+=ga;if(gf>ga){r.w++;r.pts+=3;}else if(gf===ga){r.d++;r.pts+=1;}else r.l++;}
+function simGame(a,b){const sa=TEAMS[a].mult+TEAMS[a].rank*0.05,sb=TEAMS[b].mult+TEAMS[b].rank*0.05;const ga=Math.max(0,Math.round(rnd(-0.4,3.4)*sa/sb)),gb=Math.max(0,Math.round(rnd(-0.4,3.4)*sb/sa));record(a,ga,gb);record(b,gb,ga);}
+function seasonResult(my,their){
+  const S_=SAVE.season,opp=G.awayKey;let earned=0;
+  if(S_.final){S_.champ=my>their;S_.done=true;if(S_.champ){earned+=PRIZES.champ;SAVE.team.manuals++;}}
+  else{record('riptide',my,their);record(opp,their,my);const others=LEAGUE.filter(k=>k!==opp).sort(()=>Math.random()-0.5);simGame(others[0],others[1]);simGame(others[2],others[3]);
+    earned+=my>their?PRIZES.win:my===their?PRIZES.draw:0;S_.week++;
+    if(S_.week>=LEAGUE.length){const st=standings();const place=st.indexOf('riptide')+1;S_.place=place;earned+=PRIZES.place[place-1]||0;
+      if(place<=2){S_.final={opp:st.find(k=>k!=='riptide')};}else S_.done=true;}}
+  SAVE.team.money+=earned;SAVE.scoutPts=3;S_.last={my,their,opp,earned};G.seasonEarned=earned;persist();
+}
+function endSeasonRollover(){
+  // contracts tick down; expiring players need a decision
+  SAVE.team.roster.forEach(r=>r.years--);
+  SAVE.fa=(SAVE.fa||[]).filter(r=>r.scouted).slice(0,3).concat(Array.from({length:7},()=>genFA(1+((Math.random()*4)|0))));
+  newSeason();persist();
+}
+function renewCost(r){return salaryFor(lvlOf(psave(r.name).xp),r.pot);}
 
 // =================== PARTICLES ===================
 function part(o){if(G.auto||G.parts.length>400)return;G.parts.push(Object.assign({vx:0,vy:0,life:0.8,size:1.2,kind:'dot',rot:Math.random()*6},o,{max:o.life||0.8}));}
@@ -562,7 +628,7 @@ function refreshPlanOdds(){
 function s2w(pt){const c=G.cam;return {x:(pt.x-VX)/c.z+c.x,y:(pt.y-VY)/c.z+c.y};}
 function w2s(pt){const c=G.cam;return {x:(pt.x-c.x)*c.z+VX,y:(pt.y-c.y)*c.z+VY};}
 function updateCam(dt){
-  const c=G.cam,inG=G.players.length&&!['title','howto','roster'].includes(G.state);let tx=CX,ty=CY,tz=FITZ;
+  const c=G.cam,inG=G.players.length&&!['title','howto','roster','quick','team','scout','season'].includes(G.state);let tx=CX,ty=CY,tz=FITZ;
   if(inG&&G.state!=='paused'&&G.state!=='half'&&G.state!=='final'){tz=G.flight&&G.flight.kind==='shot'&&!G.auto?1+0.55*clamp(G.flight.t/G.flight.dur*1.6,0,1):1;const b=G.flight?{x:G.flight.x,y:G.flight.y}:G.loose?{x:G.loose.x,y:G.loose.y}:(G.carrier||{x:CX,y:CY});tx=b.x;ty=b.y+(G.carrier&&G.carrier.team===0?-14:14);}
   const k=Math.min(1,dt*3.2);c.z+=(tz-c.z)*k;
   const hw=W/2/c.z,hh=(PANEL-15)/2/c.z,mx=Math.max(0,R+14-hw),my=Math.max(0,R+16-hh);
@@ -1054,50 +1120,163 @@ function drawCut(){
 function statusChipsAt(p,x,y){const ks=['poison','sleep','weak','slow'].filter(k=>p.fx[k]>0);ks.forEach((k,i)=>{const cx=x+(i-(ks.length-1)/2)*26;rrect(ctx,cx-12,y-3.5,24,7,3.5);ctx.fillStyle=FX[k].col;ctx.fill();txt(FX[k].name,cx,y,4.6,'#140f2e','center',{stroke:false});});}
 // ---- screens ----
 function overlay(a=0.82){ctx.fillStyle=`rgba(12,9,32,${a})`;ctx.fillRect(0,0,W,H);}
+function backBtn(to){btn(6,H-26,60,18,'◀ BACK',()=>{G.state=to;},{col:'#5a4fb0',size:6.5});}
+function moneyTag(){rrect(ctx,W-62,4,58,12,6);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle='#ffd24a';ctx.stroke();txt('$'+SAVE.team.money,W-33,10.4,7,'#ffd24a');}
+function stars(n,x,y,size,col,max=5){txt('★'.repeat(n)+'☆'.repeat(Math.max(0,max-n)),x,y,size,col||'#ffd24a','left',{stroke:false});}
+// ---------- title ----------
 function drawTitle(){
+  initTeam();if(!SAVE.season)newSeason();
   overlay(0.45);
-  const b=Math.sin(G.time*2)*2;drawBall(CX,CY-56+b,'#5fd3ff');
+  const b=Math.sin(G.time*2)*2;drawBall(CX,CY-60+b,'#5fd3ff');
   txt('SPHERE',CX,34,30,'#7ff0e0','center',{sw:0.24});txt('LEAGUE',CX,60,26,'#ffffff','center',{sw:0.24});
   txt('FRONT RANGE CHAMPIONSHIP',CX,80,7,'#ffd24a');
   rrect(ctx,10,96,160,200,10);ctx.fillStyle='rgba(18,14,43,0.9)';ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle='#5b52b8';ctx.stroke();
-  txt('YOU: LAKEWOOD RIPTIDE',CX,106,7,'#7ff0e0');txt('Climb the ladder - beat each team to unlock the next',CX,117,4.8,'#cfe3ff','center',{stroke:false});
-  let y=123;
+  txt('LAKEWOOD RIPTIDE',CX,106,7,'#7ff0e0');
+  const S_=SAVE.season;txt('Season '+S_.n+' · '+(S_.done?'complete':S_.final?'FINAL':'week '+(S_.week+1)+' of '+LEAGUE.length)+' · $'+SAVE.team.money,CX,117,5.2,'#cfe3ff','center',{stroke:false});
+  btn(18,124,144,30,'SEASON',()=>{G.state='season';},{col:'#22a898',size:10,sub:S_.done?'see results':S_.final?'Championship final!':'Play week '+(S_.week+1),subc:'#ffffff',subsize:5.5});
+  btn(18,160,70,24,'TEAM',()=>{G.state='team';G.teamSel=null;},{col:'#2f7ae0',size:7,sub:'lineup & contracts',subsize:4.4,subc:'#ffffff'});
+  btn(92,160,70,24,'SCOUT',()=>{G.state='scout';G.faPage=0;},{col:'#d9862a',size:7,sub:SAVE.scoutPts+' scout pts',subsize:4.4,subc:'#ffffff'});
+  btn(18,190,70,22,'QUICK MATCH',()=>{G.state='quick';},{col:'#5a4fb0',size:5.6,sub:'exhibition',subsize:4.4,subc:'#ffe066'});
+  btn(92,190,70,22,'HOW TO',()=>{G.state='howto';},{col:'#5a4fb0',size:6,sub:'PLAY',subc:'#ffe066',subsize:4.6});
+  btn(18,218,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
+  txt('PROTOTYPE v0.12',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+}
+function drawQuick(){
+  overlay(0.9);txt('QUICK MATCH',CX,16,13,'#7ff0e0');txt('Exhibitions earn XP but don\'t count for the season',CX,30,5,'#cfe3ff','center',{stroke:false});
+  let y=40;
   for(const k of LADDER){const t=TEAMS[k],open=unlockedTeam(k),won=SAVE.beaten[k];const prev=TEAMS[LADDER[LADDER.indexOf(k)-1]];
-    btn(18,y,144,24,(open?'':'🔒 ')+t.name.toUpperCase(),()=>{setupMatch(k);sfx('whistle');},{col:shade(t.col,0.85),size:7,sub:open?(t.tier+(won?'  ★ BEATEN':'')+(k==='practice'?' · half XP':'')):'Beat '+prev.name+' to unlock',subc:'#ffffff',subsize:5,disabled:!open});y+=28;}
-  btn(18,y+27,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
-  btn(18,y+2,70,22,'ROSTER',()=>{G.state='roster';},{col:'#5a4fb0',size:6.5,sub:'& MOVES',subc:'#ffe066',subsize:5});
-  btn(92,y+2,70,22,'HOW TO',()=>{G.state='howto';},{col:'#5a4fb0',size:6.5,sub:'PLAY',subc:'#ffe066',subsize:5});
-  txt('PROTOTYPE v0.11',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+    btn(18,y,144,24,(open?'':'🔒 ')+t.name.toUpperCase(),()=>{setupMatch(k);sfx('whistle');},{col:shade(t.col,0.85),size:7,sub:open?(t.tier+(won?'  ★ BEATEN':'')+(k==='practice'?' · half XP':'')):'Beat '+prev.name+' to unlock',subc:'#ffffff',subsize:5,disabled:!open});y+=29;}
+  for(const k of ['divers','anglers']){const t=TEAMS[k];btn(18,y,144,24,t.name.toUpperCase(),()=>{setupMatch(k);sfx('whistle');},{col:shade(t.col,0.85),size:7,sub:t.tier,subc:'#ffffff',subsize:5});y+=29;}
+  backBtn('title');
 }
-let rosterPlayers=null;
+// ---------- team / lineup ----------
+function drawTeam(){
+  initTeam();overlay(0.93);txt('TEAM',10,14,13,'#7ff0e0','left');moneyTag();
+  txt('Tap two players to swap them · ⓘ for details',CX,27,5,'#cfe3ff','center',{stroke:false});
+  const L=SAVE.team.lineup,on=new Set(Object.values(L));
+  const rows=SLOTS.map(sl=>({slot:sl,rec:recOf(L[sl])})).concat(SAVE.team.roster.filter(r=>!on.has(r.id)).map(r=>({slot:'BENCH',rec:r})));
+  rows.forEach((row,i)=>{const r=row.rec,y=34+i*21.5,sel=G.teamSel===r.id,lv=lvlOf(psave(r.name).xp),oop=row.slot!=='BENCH'&&row.slot!==r.pos;
+    rrect(ctx,6,y,168,19,5);ctx.fillStyle=sel?'#3d3584':row.slot==='BENCH'?'#17142f':'#1f1a48';ctx.fill();ctx.lineWidth=sel?1.4:0.8;ctx.strokeStyle=sel?'#ffd24a':'#3d3584';ctx.stroke();
+    rrect(ctx,9,y+3,22,13,3);ctx.fillStyle=row.slot==='BENCH'?'#4a4868':TEAMS.riptide.col;ctx.fill();txt(row.slot==='BENCH'?'BN':row.slot,20,y+9.6,5.6,'#ffffff');
+    const tmp={team:0,isGK:r.pos==='GK',skin:SKINS[r.skin],hair:HAIRS[r.hair],hs:r.hs,face:0,fx:{}};avatar(tmp,40,y+9.5,7);
+    txt(r.name,51,y+6.5,6,'#ffffff','left',{sw:0.2});txt(r.pos+' · LV '+lv+(oop?' · out of position':''),51,y+14,4.4,oop?'#ff8a8a':'#9fb0e0','left',{stroke:false});
+    txt((r.scouted?CURVES[r.curve].name:'Growth ?'),128,y+6.5,4.4,'#7ff0e0','center',{stroke:false});txt(r.years+' yr · $'+r.salary,128,y+14,4.4,r.years<=1?'#ffb36b':'#cfe3ff','center',{stroke:false});
+    buttons.push({x:6,y,w:146,h:19,fn:()=>{if(!G.teamSel){G.teamSel=r.id;return;}if(G.teamSel===r.id){G.teamSel=null;return;}swapLineup(G.teamSel,r.id);G.teamSel=null;}});
+    btn(154,y+2,18,15,'ⓘ',()=>{G.detailId=r.id;G.state='roster';},{col:'#5a4fb0',size:7});});
+  txt('Roster '+SAVE.team.roster.length+'/10 · Move manuals: '+SAVE.team.manuals,CX,H-34,5,'#cfe3ff','center',{stroke:false});
+  backBtn('title');btn(114,H-26,60,18,'SCOUT ▶',()=>{G.state='scout';G.faPage=0;},{col:'#d9862a',size:6.5});
+}
+function swapLineup(a,b){const L=SAVE.team.lineup;const sa=SLOTS.find(s=>L[s]===a),sb=SLOTS.find(s=>L[s]===b);
+  if(sa&&sb){L[sa]=b;L[sb]=a;}else if(sa){L[sa]=b;}else if(sb){L[sb]=a;}persist();sfx('blip');}
+// ---------- player detail ----------
 function drawRoster(){
-  overlay(0.9);
-  if(!rosterPlayers)rosterPlayers=buildHome();
-  const ps=rosterPlayers;
-  txt('ROSTER & MOVES',CX,14,14,'#7ff0e0');
-  ps.forEach((p,i)=>{const x=8+(i%3)*56,y=26+Math.floor(i/3)*30,sel=i===G.rosterSel;
-    rrect(ctx,x,y,52,26,6);ctx.fillStyle=sel?'#3d3584':'#1f1a48';ctx.fill();ctx.lineWidth=sel?1.5:1;ctx.strokeStyle=sel?'#ffd24a':'#3d3584';ctx.stroke();
-    avatar(p,x+11,y+13,8);txt(p.name,x+21,y+9,5.5,'#ffffff','left');txt(p.pos+' · LV '+p.level,x+21,y+18,4.8,'#9fb0e0','left',{stroke:false});
-    buttons.push({x,y,w:52,h:26,fn:()=>{G.rosterSel=i;}});});
-  const p=ps[G.rosterSel];
-  let y=90;
-  const xpN=xpFor(p.level+1),xpC=xpFor(p.level),f=p.level>=10?1:(p.xp-xpC)/(xpN-xpC);
-  txt(p.name+'  LV '+p.level,10,y,9,'#ffffff','left');
-  rrect(ctx,92,y-3,80,6,3);ctx.fillStyle='#0b0820';ctx.fill();rrect(ctx,92.5,y-2.5,79*clamp(f,0,1),5,2.5);ctx.fillStyle='#ffd24a';ctx.fill();
-  txt(p.level>=10?'MAX':Math.round(p.xp)+' / '+xpN+' XP',132,y+8,4.8,'#cfe3ff','center',{stroke:false});txt('SP '+p.spMax+(p.level<10?' (next LV: '+spMaxFor(p.spBase,p.level+1)+')':''),10,y+9,5,'#7fc4ff','left',{stroke:false});
-  const ks=['spd','end','atk','pas','blk','sht','cat'];ks.forEach((k,i)=>{txt(k.toUpperCase(),12+i*23,y+18,4.8,'#8fa0d8','left',{stroke:false});txt(p[k],12+i*23,y+25,6.5,'#ffffff','left',{sw:0.2});});
-  y+=34;
+  initTeam();overlay(0.93);const rec=recOf(G.detailId)||SAVE.team.roster[0];const p=makeFromRec(rec,rec.pos);moneyTag();
+  avatar(p,24,22,15);txt(p.name,44,16,10,'#ffffff','left');txt(rec.pos+' · '+rec.town+' · LV '+p.level,44,29,5.4,'#9fb0e0','left',{stroke:false});
+  let y=44;const xpN=xpFor(p.level+1),xpC=xpFor(p.level),f=p.level>=10?1:(p.xp-xpC)/(xpN-xpC);
+  rrect(ctx,10,y,96,5,2.5);ctx.fillStyle='#0b0820';ctx.fill();rrect(ctx,10.5,y+0.5,95*clamp(f,0,1),4,2);ctx.fillStyle='#ffd24a';ctx.fill();
+  txt(p.level>=10?'MAX LEVEL':Math.round(p.xp)+' / '+xpN+' XP',58,y+10,4.6,'#cfe3ff','center',{stroke:false});
+  txt(CURVES[rec.curve].name,140,y+2,6,'#7ff0e0','center');txt(CURVES[rec.curve].desc,140,y+10,4.2,'#cfe3ff','center',{stroke:false});
+  y+=18;STAT_KEYS.forEach((k,i)=>{txt(k.toUpperCase(),12+i*23,y,4.8,'#8fa0d8','left',{stroke:false});txt(p[k],12+i*23,y+7,6.5,'#ffffff','left',{sw:0.2});
+    const nx=Math.round(rec.base[i]*curveMult(rec,Math.min(10,p.level+1),i));if(p.level<10)txt('→'+nx,12+i*23,y+14,4.2,'#7dffb0','left',{stroke:false});});
+  y+=20;txt('SP '+p.spMax+' · Contract '+rec.years+' season'+(rec.years===1?'':'s')+' · $'+rec.salary+'/season',10,y,5,'#7fc4ff','left',{stroke:false});
+  y+=8;
   const list=p.moveTable.map(r=>[r[0],r[1],false]);p.learned.forEach(id=>{const e=list.find(r=>r[0]===id);if(e)e[2]=true;else list.push([id,1,true]);});
-  list.slice(0,5).forEach(([id,lv,cp])=>{const m=MOVES[id],have=lv<=p.level||cp,u=p.uses[id]||0,rk=rankOf(p,id);if(list.length>4&&y>260)return;
-    rrect(ctx,8,y,164,29,6);ctx.fillStyle=have?shade(m.col,0.35):'#1a1736';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=have?m.col:'#3a3666';ctx.stroke();
-    txt(m.name+(cp?'  (COPIED)':''),14,y+7,7,have?'#ffffff':'#7a76a8','left');
-    rrect(ctx,124,y+3,44,8,4);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fill();txt(TYPE_LABEL[m.type]+' · SP '+spCost(p,id),146,y+7.2,4.6,'#ffffff','center',{stroke:false});
-    txt(m.desc,14,y+16,5,have?'#e8f0ff':'#6a6698','left',{stroke:false});
-    if(have){txt('★'.repeat(rk)+'☆'.repeat(3-rk),14,y+24,6,'#ffd24a','left',{stroke:false});txt('Used '+u+'x'+(rk<3?' · next rank at '+(rk===1?3:8):' · max rank'),40,y+24.3,4.6,'#cfe3ff','left',{stroke:false});}
-    else txt('🔒 Unlocks at LV '+lv,14,y+24,5,'#ffb36b','left',{stroke:false});
-    y+=32;});
-  btn(50,H-28,80,20,'BACK',()=>{G.state='title';rosterPlayers=null;},{col:'#2fb36a'});
+  list.slice(0,5).forEach(([id,lv,cp])=>{const m=MOVES[id],have=lv<=p.level||cp,u=p.uses[id]||0,rk=rankOf(p,id);
+    rrect(ctx,8,y,164,25,5);ctx.fillStyle=have?shade(m.col,0.35):'#1a1736';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=have?m.col:'#3a3666';ctx.stroke();
+    txt(m.name+(cp?'  (COPIED)':''),14,y+6.5,6.5,have?'#ffffff':'#7a76a8','left');
+    rrect(ctx,124,y+3,44,8,4);ctx.fillStyle='rgba(0,0,0,0.35)';ctx.fill();txt(TYPE_LABEL[m.type]+' · SP '+spCost(p,id),146,y+7.2,4.4,'#ffffff','center',{stroke:false});
+    txt(m.desc,14,y+14,4.6,have?'#e8f0ff':'#6a6698','left',{stroke:false});
+    if(have)txt('★'.repeat(rk)+'☆'.repeat(3-rk)+'  used '+u+'x',14,y+21,4.6,'#ffd24a','left',{stroke:false});else txt('🔒 Unlocks at LV '+lv,14,y+21,4.8,'#ffb36b','left',{stroke:false});
+    y+=27;});
+  const by=H-50;
+  if(SAVE.team.manuals>0)btn(10,by,78,18,'USE MANUAL',()=>{G.menu='manual';},{col:'#d99a2a',size:6});
+  const onField=Object.values(SAVE.team.lineup).includes(rec.id);
+  btn(92,by,78,18,G.releaseAsk===rec.id?'TAP AGAIN':'RELEASE',()=>{if(onField||SAVE.team.roster.length<=7){popup('Bench them first (need 7+)',90,by-6,'#ff8a8a',6);return;}if(G.releaseAsk!==rec.id){G.releaseAsk=rec.id;return;}SAVE.team.roster=SAVE.team.roster.filter(r=>r!==rec);rec.years=1;rec.scouted=true;(SAVE.fa=SAVE.fa||[]).push(rec);persist();G.releaseAsk=null;G.state='team';},{col:'#c0485e',size:6,disabled:onField});
+  backBtn('team');
+  if(G.menu==='manual'){const opts=Object.keys(MOVES).filter(id=>COPY_ROLES[MOVES[id].type].includes(rec.pos)&&!p.moves.includes(id)).slice(0,7);
+    sheet('TEACH A MOVE (uses 1 manual)',opts.map(id=>({label:MOVES[id].name,sub:MOVES[id].desc,col:shade(MOVES[id].col,0.6),fn:()=>{(SAVE.learned[rec.name]=SAVE.learned[rec.name]||[]).push(id);SAVE.team.manuals--;persist();G.menu=null;sfx('level');}})));}
+  for(const p2 of G.popups){}
 }
+// ---------- scouting ----------
+function drawScout(){
+  initTeam();overlay(0.93);txt('SCOUTING',10,14,13,'#7ff0e0','left');moneyTag();
+  if(!SAVE.fa||!SAVE.fa.length)SAVE.fa=Array.from({length:8},()=>genFA(1+((Math.random()*3)|0)));
+  txt('Scout points: '+SAVE.scoutPts+' (refill each season match) · Roster '+SAVE.team.roster.length+'/10',CX,27,4.8,'#cfe3ff','center',{stroke:false});
+  const per=4,pages=Math.ceil(SAVE.fa.length/per),pg=clamp(G.faPage||0,0,pages-1);
+  SAVE.fa.slice(pg*per,pg*per+per).forEach((r,i)=>{const y=34+i*54,lv=lvlOf(r.startXp||0);
+    rrect(ctx,6,y,168,51,6);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle=r.scouted?'#7ff0e0':'#3d3584';ctx.stroke();
+    const tmp={team:0,isGK:r.pos==='GK',skin:SKINS[r.skin],hair:HAIRS[r.hair],hs:r.hs,face:0,fx:{}};avatar(tmp,20,y+14,10);
+    txt(r.name,34,y+7,7,'#ffffff','left',{sw:0.2});txt(r.pos+' · LV '+lv+' · '+r.town,34,y+14.5,4.6,'#9fb0e0','left',{stroke:false});
+    STAT_KEYS.forEach((k,j)=>{txt(k.toUpperCase(),10+j*23,y+30,4.2,'#8fa0d8','left',{stroke:false});txt(Math.round(r.base[j]*curveMult(r,lv,j)),10+j*23,y+36.5,5.6,'#ffffff','left',{sw:0.2});});
+    if(r.scouted){stars(r.pot,34,y+21.5,5.2);txt(CURVES[r.curve].name,68,y+21.5,4.6,'#7ff0e0','left',{stroke:false});txt('Moves: '+r.moveTable.map(m=>MOVES[m[0]].name+(m[1]>1?' (LV'+m[1]+')':'')).join(', '),10,y+45,4.2,'#e8f0ff','left',{stroke:false});}
+    else{const lo=clamp(r.pot-1,1,5),hi=clamp(r.pot+1,1,5);txt('Potential '+lo+'–'+hi+'★ · Growth ???',34,y+21.5,4.8,'#ffd24a','left',{stroke:false});txt('Scout to reveal growth curve, potential and moves',10,y+45,4.2,'#8fa0d8','left',{stroke:false});}
+    btn(112,y+3,28,13,'SCOUT',()=>{if(SAVE.scoutPts>0){SAVE.scoutPts--;r.scouted=true;persist();sfx('blip');}},{col:'#d9862a',size:4.8,disabled:r.scouted||SAVE.scoutPts<=0});
+    btn(143,y+3,29,13,'$'+r.salary,()=>{if(SAVE.team.money<r.salary){popup('Not enough money',90,y+20,'#ff8a8a',6);return;}if(SAVE.team.roster.length>=10){popup('Roster full (10)',90,y+20,'#ff8a8a',6);return;}
+      SAVE.team.money-=r.salary;SAVE.fa=SAVE.fa.filter(x=>x!==r);r.scouted=true;psave(r.name).xp=r.startXp||0;SAVE.team.roster.push(r);persist();sfx('level');popup('SIGNED '+r.name+'!',90,y+20,'#7dffb0',7);},{col:'#2fb36a',size:5,disabled:SAVE.team.money<r.salary||SAVE.team.roster.length>=10});
+    txt(r.years+' yr deal',157,y+21.5,4.2,'#cfe3ff','center',{stroke:false});});
+  if(pages>1){btn(72,H-26,22,18,'◀',()=>{G.faPage=(pg-1+pages)%pages;},{col:'#3a3f6a',size:7});txt((pg+1)+'/'+pages,104,H-17,6,'#ffffff');btn(114,H-26,22,18,'▶',()=>{G.faPage=(pg+1)%pages;},{col:'#3a3f6a',size:7});}
+  backBtn('title');btn(140,H-26,34,18,'TEAM',()=>{G.state='team';},{col:'#2f7ae0',size:6});
+  drawPopupsScreen();
+}
+function drawPopupsScreen(){for(const p of G.popups){if(p.screen===false)continue;}}
+// ---------- season hub ----------
+function drawSeason(){
+  initTeam();if(!SAVE.season)newSeason();const S_=SAVE.season;overlay(0.93);moneyTag();
+  txt('SEASON '+S_.n,10,15,13,'#7ff0e0','left');
+  if(S_.done){
+    const st=standings(),place=st.indexOf('riptide')+1;
+    txt(S_.champ?'CHAMPIONS!':S_.final?'RUNNERS-UP':'FINISHED '+['1ST','2ND','3RD','4TH','5TH','6TH'][place-1],CX,36,15,S_.champ?'#ffd24a':'#ffffff');
+    txt(S_.champ?'+$'+PRIZES.champ+' and a Move Manual':'Final standings below',CX,52,6,'#cfe3ff','center',{stroke:false});
+    drawTable(62);
+    const exp=SAVE.team.roster.filter(r=>r.years<=1);
+    txt('CONTRACTS ENDING',12,184,6,'#ffb36b','left');
+    if(!exp.length)txt('Nobody - everyone is signed for next season',12,194,5,'#cfe3ff','left',{stroke:false});
+    exp.slice(0,3).forEach((r,i)=>{const y=190+i*19,c=renewCost(r);txt(r.name+' ('+r.pos+')',12,y+7,5.6,'#ffffff','left',{sw:0.2});
+      btn(84,y,48,15,'RENEW $'+c,()=>{if(SAVE.team.money<c)return;SAVE.team.money-=c;r.salary=c;r.years+=2;persist();sfx('blip');},{col:'#2fb36a',size:4.8,disabled:SAVE.team.money<c});
+      btn(136,y,38,15,'LET GO',()=>{if(SAVE.team.roster.length<=7||Object.values(SAVE.team.lineup).includes(r.id)){popup('Bench them first (need 7+)',90,y,'#ff8a8a',6);return;}SAVE.team.roster=SAVE.team.roster.filter(x=>x!==r);r.years=1;(SAVE.fa=SAVE.fa||[]).push(r);persist();},{col:'#c0485e',size:4.8});});
+    btn(30,H-50,120,20,'START SEASON '+(S_.n+1),()=>{const keep=SAVE.team.roster.filter(r=>r.years>1||r.renewed);SAVE.team.roster.forEach(r=>{if(r.years<=1&&SAVE.team.roster.length>7&&!Object.values(SAVE.team.lineup).includes(r.id)){}});endSeasonRollover();SAVE.team.roster.forEach(r=>{if(r.years<1)r.years=1;});persist();},{col:'#22a898',size:7});
+    txt('Unrenewed players play one more season, then must be renewed',CX,H-56,4.4,'#8fa0d8','center',{stroke:false});
+    backBtn('title');return;
+  }
+  const opp=S_.final?S_.final.opp:LEAGUE[S_.week],t=TEAMS[opp];
+  txt(S_.final?'CHAMPIONSHIP FINAL':'WEEK '+(S_.week+1)+' OF '+LEAGUE.length,CX,31,7,'#ffd24a');
+  rrect(ctx,8,38,164,30,7);ctx.fillStyle=shade(t.col,0.4);ctx.fill();ctx.lineWidth=1.2;ctx.strokeStyle=t.col;ctx.stroke();
+  txt('vs '+t.name.toUpperCase(),CX,48,8,'#ffffff');txt(t.tier+' · plays '+t.style.form+' / '+t.style.cover,CX,60,5,'#ffffff','center',{stroke:false});
+  if(S_.last){const l=S_.last;txt('Last: '+(l.my>l.their?'W':l.my===l.their?'D':'L')+' '+l.my+'-'+l.their+' vs '+TEAMS[l.opp].short+(l.earned?' · +$'+l.earned:''),CX,75,5,'#cfe3ff','center',{stroke:false});}
+  drawTable(80);
+  rrect(ctx,8,200,164,30,6);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle='#ffd24a';ctx.stroke();
+  txt('PRIZES (guaranteed)',CX,207,5.6,'#ffd24a');
+  txt('Win $'+PRIZES.win+' · Draw $'+PRIZES.draw+' · 1st $'+PRIZES.place[0]+' · 2nd $'+PRIZES.place[1]+' · 3rd $'+PRIZES.place[2],CX,216,4.6,'#ffffff','center',{stroke:false});
+  txt('Top 2 play the final · Champion +$'+PRIZES.champ+' and a Move Manual',CX,224,4.6,'#ffffff','center',{stroke:false});
+  btn(30,H-76,120,26,'PLAY MATCH',()=>{G.nextSeasonGame=true;if(S_.final)G.finalGame=true;setupMatch(opp);sfx('whistle');},{col:'#22a898',size:9});
+  btn(6,H-46,52,18,'TEAM',()=>{G.state='team';},{col:'#2f7ae0',size:6});btn(64,H-46,52,18,'SCOUT',()=>{G.state='scout';G.faPage=0;},{col:'#d9862a',size:6});
+  backBtn('title');
+}
+function drawTable(y){
+  const t=SAVE.season.table,st=standings();
+  txt('TEAM',12,y+5,4.6,'#8fa0d8','left',{stroke:false});['W','D','L','GD','PTS'].forEach((h,i)=>txt(h,104+i*15,y+5,4.6,'#8fa0d8','center',{stroke:false}));
+  st.forEach((k,i)=>{const r=t[k],yy=y+13+i*13,me=k==='riptide',tm=me?TEAMS.riptide:TEAMS[k];
+    if(me){rrect(ctx,8,yy-5,164,11,4);ctx.fillStyle='rgba(34,184,168,0.25)';ctx.fill();}
+    rrect(ctx,12,yy-3,4,6,1);ctx.fillStyle=tm.col;ctx.fill();txt((i+1)+'. '+tm.name,20,yy,5.2,me?'#7ff0e0':'#ffffff','left',{stroke:false});
+    [r.w,r.d,r.l,(r.gf-r.ga>0?'+':'')+(r.gf-r.ga),r.pts].forEach((v,j)=>txt(v,104+j*15,yy,5.2,j===4?'#ffd24a':'#ffffff','center',{stroke:false}));});
+}
+// ---------- halftime subs ----------
+function drawSubs(){
+  overlay(0.95);txt('SUBSTITUTIONS',CX,16,12,'#7ff0e0');txt('Tap a player on the field, then a bench player to swap',CX,29,5,'#cfe3ff','center',{stroke:false});
+  const on=teamOf(0);on.forEach((p,i)=>{const y=36+i*21,sel=G.subSel===p;
+    rrect(ctx,6,y,100,19,5);ctx.fillStyle=sel?'#3d3584':'#1f1a48';ctx.fill();ctx.lineWidth=sel?1.4:0.8;ctx.strokeStyle=sel?'#ffd24a':'#3d3584';ctx.stroke();
+    txt(p.pos,16,y+9.5,5.6,TEAMS.riptide.col);avatar(p,32,y+9.5,7);txt(p.name,42,y+6,5.6,'#ffffff','left',{sw:0.2});hpBar(42,y+11,40,p,3);
+    const sts=['poison','sleep','weak','slow'].filter(k=>p.fx[k]>0);if(sts.length)txt(sts.map(k=>FX[k].name).join(' '),84,y+12.5,3.8,'#ff8a8a','left',{stroke:false});
+    buttons.push({x:6,y,w:100,h:19,fn:()=>{G.subSel=sel?null:p;}});});
+  txt('BENCH',140,40,6,'#ffb36b');
+  if(!G.bench.length)txt('No bench players - sign some in Scouting',140,56,4.4,'#cfe3ff','center',{stroke:false});
+  G.bench.forEach((b,i)=>{const y=48+i*30;rrect(ctx,110,y,64,27,5);ctx.fillStyle='#17142f';ctx.fill();ctx.lineWidth=0.8;ctx.strokeStyle='#3d3584';ctx.stroke();
+    avatar(b,121,y+10,7);txt(b.name,131,y+7,5,'#ffffff','left',{sw:0.2});txt(b.natural+' LV'+b.level,131,y+14,4.2,'#9fb0e0','left',{stroke:false});txt('fresh · full HP',142,y+22,4,'#7dffb0','center',{stroke:false});
+    buttons.push({x:110,y,w:64,h:27,fn:()=>{if(!G.subSel)return;const out=G.subSel,idx=G.players.indexOf(out);b.pos=out.pos;applyLevelStats(b);b.hp=b.end;b.x=out.x;b.y=out.y;b.vx=b.vy=0;for(const k in b.fx)b.fx[k]=0;
+      G.players[idx]=b;out.pos=out.natural;G.bench[i]=out;Object.keys(G.marks||{}).forEach(k=>{if(k===out.name)delete G.marks[k];});G.subSel=null;sfx('blip');popup(b.name+' IN',90,200,'#7dffb0',7);}});});
+  btn(50,H-30,80,20,'DONE',()=>{G.halfView=null;G.subSel=null;},{col:'#2fb36a',size:7});
+}
+
 function drawHowTo(){
   overlay(0.92);
   txt('HOW TO PLAY',CX,16,14,'#7ff0e0');
@@ -1105,12 +1284,13 @@ function drawHowTo(){
     ['PAUSE + PLAN any time:','#7ff0e0'],['drag runs, tap a mate to queue a pass that','#cfe3ff'],['fires when they hit their spot.','#cfe3ff'],['',''],
     ['ENCOUNTERS','#ff8a8a'],['When a defender reaches you, pick Pass, Shoot','#cfe3ff'],['or Break. Moves cost SP (blue bar); basics are free.','#cfe3ff'],['',''],
     ['STATUS','#b58cff'],['Poison drains HP · Sleep = can\'t move or block','#cfe3ff'],['Weak = lower BLK/CAT · Slow = lower SPD','#cfe3ff'],['',''],
-    ['MOVES RANK UP','#ffd24a'],['the more you use them, and recharge after use.','#cfe3ff'],['Level up to unlock more. Get hit by a move','#cfe3ff'],['and your nearby player may COPY it.','#cfe3ff'],['',''],['25s shot clock · 5-goal lead ends the match','#ffb36b'],['TACTICS (in Pause + Plan): formation + zone/man','#d99a2a'],['HP = stamina: carrying drains it, rest refills','#cfe3ff']];
+    ['MOVES RANK UP','#ffd24a'],['the more you use them, and recharge after use.','#cfe3ff'],['Level up to unlock more. Get hit by a move','#cfe3ff'],['and your nearby player may COPY it.','#cfe3ff'],['',''],['25s shot clock · 5-goal lead ends the match','#ffb36b'],['TACTICS (in Pause + Plan): formation + zone/man','#d99a2a'],['HP = stamina: carrying drains it, rest refills','#cfe3ff'],['SEASON: 5 weeks + final · SCOUT & sign players','#7ff0e0']];
   L.forEach((l,i)=>{if(l[0])txt(l[0],10,34+i*9.3,l[1]==='#ffffff'||l[1]==='#cfe3ff'?5.6:6.4,l[1],'left',{stroke:l[1]!=='#cfe3ff'&&l[1]!=='#ffffff',sw:0.22});});
   btn(50,H-30,80,20,'GOT IT',()=>{G.state='title';},{col:'#2fb36a'});
 }
 function startSecondHalf(){G.half=2;G.clock=HALF_LEN;G.players.forEach(p=>{p.hp=p.end;p.sp=Math.min(p.spMax,p.sp+p.spMax*0.5);for(const k in p.fx)p.fx[k]=0;});kickoff(1);}
 function drawHalf(){
+  if(G.halfView==='subs'){drawSubs();return;}
   overlay(0.93);txt('HALFTIME',CX,16,15,'#ffffff');
   txt('LKW '+G.score[0]+' - '+G.score[1]+' '+G.away.short,CX,33,9,'#ffe066');
   txt('Everyone back to full HP · half SP refilled · statuses cleared',CX,44,4.8,'#cfe3ff','center',{stroke:false});
@@ -1124,7 +1304,8 @@ function drawHalf(){
     txt(p.name+' ('+p.pos+')',12,y+10,6,'#ffffff','left',{sw:0.2});
     btn(80,y,92,20,cur?'MARK '+cur.name:'NO MARK',()=>{const j=opts.indexOf(cur);G.marks[p.name]=opts[(j+1)%opts.length];},{col:cur?'#7a5fd0':'#3a3a6a',size:6,sub:cur?cur.pos+' · SHT '+cur.sht+' · tap to change':'follows team coverage',subc:'#ffffff',subsize:4.4});});
   txt('Tip: mark their best shooter with your best blocker',CX,218,5,'#cfe3ff','center',{stroke:false});
-  btn(35,228,110,24,'START 2ND HALF',startSecondHalf,{col:'#2fb36a',size:7});
+  btn(10,228,70,24,'SUBS',()=>{G.halfView='subs';},{col:'#d9862a',size:7,sub:G.bench.length+' on bench',subsize:4.6,subc:'#ffffff'});
+  btn(86,228,84,24,'START 2ND HALF',startSecondHalf,{col:'#2fb36a',size:6.5});
 }
 function drawFinal(){
   overlay(0.92);
@@ -1140,7 +1321,8 @@ function drawFinal(){
   if(G.levelUps.length){txt('LEVEL UP!',CX,y,10,'#ffd24a');y+=12;
     for(const l of G.levelUps.slice(0,4)){txt(l.p.name+' → LV '+l.lv,CX,y,6.5,'#ffffff');y+=8;if(l.moves.length){txt('New move: '+l.moves.join(', '),CX,y,5.5,'#7ff0e0','center',{stroke:false});y+=9;}}}
   else{txt('G goals · P passes · T tackles/saves/steals',CX,y,5,'#6f6aa8','center',{stroke:false});}
-  btn(30,H-58,120,22,'REMATCH',()=>{setupMatch(G.awayKey);sfx('whistle');},{col:'#2fb36a'});
+  if(G.seasonGame){txt('+$'+(G.seasonEarned||0)+' prize money',CX,H-66,7,'#ffd24a');btn(30,H-58,120,22,'SEASON HUB',()=>{G.state='season';},{col:'#22a898'});}
+  else btn(30,H-58,120,22,'REMATCH',()=>{setupMatch(G.awayKey);sfx('whistle');},{col:'#2fb36a'});
   btn(30,H-31,120,20,'MAIN MENU',()=>{G.state='title';},{col:'#5a4fb0'});
 }
 function render(){
@@ -1155,7 +1337,7 @@ function render(){
   drawSphere();drawWaterFX(G.time);
   drawGoal(true,G.away?G.away.col:'#f07a2a');drawGoal(false,TEAMS.riptide.col);
   for(const b of G.bubbles){ellipse(b.x,b.y,b.s,b.s,'rgba(220,250,255,0.25)','rgba(235,252,255,0.75)',0.4);}
-  const inGame=G.players.length&&!['title','howto','roster'].includes(G.state);
+  const MENUS=['title','howto','roster','quick','team','scout','season'];const inGame=G.players.length&&!MENUS.includes(G.state);
   if(inGame){
     if(G.state==='paused'){ctx.fillStyle='rgba(10,20,60,0.3)';ctx.beginPath();ctx.arc(CX,CY,R,0,7);ctx.fill();}
     drawPlanLayer();
@@ -1190,7 +1372,8 @@ function render(){
     if(G.state==='half'){buttons=[];drawHalf();}
     if(G.state==='final'){buttons=[];drawFinal();}
   }else{
-    if(G.state==='title')drawTitle();else if(G.state==='roster')drawRoster();else drawHowTo();
+    ({title:drawTitle,roster:drawRoster,quick:drawQuick,team:drawTeam,scout:drawScout,season:drawSeason,howto:drawHowTo}[G.state]||drawTitle)();
+    for(const p of G.popups){const a=Math.min(1,p.t*2);ctx.globalAlpha=a;txt(p.txt,p.x,p.y,p.size,p.col);ctx.globalAlpha=1;}
   }
 }
 let last=performance.now(),SPEED=1;

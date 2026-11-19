@@ -1,22 +1,25 @@
-# Sphere League — Approved Art Direction (2026-11-19)
+# Sphere League — Approved Race & Art Direction
+Updated: 2026-11-19. Owner-approved design decisions. Coordinate with Claude; do not interpret speculative mechanics as implementation approval.
 
-Status: design reference for Claude; do not implement speculative stats or unapproved final art.
+## Art direction
+Colorful, chunky, polished cartoon underwater athletes, clean readable silhouettes for mobile (180×320 logical canvas; avatars readable at ~24px). Consistent original Sphere League visual language, no unrelated stock/search thumbnails. Human and Synthari wear transparent face-cover underwater breathers. Keep race/form anatomy distinct and all athletes capable of swimming, passing, shooting and tackling. Male/female presentations envisioned across forms. Previous concept artwork in ChatGPT is the approved visual reference; exact original art binaries are not yet verified as transferred to GitHub or Drive. Do not replace them with newly generated lookalikes without owner approval.
 
-## Style
-Portrait mobile game 180x320 logical canvas. Colorful, chunky, polished cartoon underwater athletes; clean outlines, readable at 24px. No plush/teddy-bear styling, generic stars/jewels, oversized heads, excessive detailing, or unrelated thumbnail art. Palette: navy #120e2b, panel #1f1a48, teal #22b8a8. Lilita One primary, Nunito Sans secondary proposed. Original IP.
+## Final race names and forms
+1. **Human** — human athletes, transparent breather.
+2. **Synthari** — humanlike android athletes with subtle synthetic seams/joints and transparent breather. Former working name: Syntha.
+3. **Pelarians** — ocean forms: Octarine, Mantae, Cartilagin, Crustal. Name inspired by Greek pelagos (open sea). Former working name: Oceanid.
+4. **Abyssal** — distinct deep-sea bioluminescent forms, including explored Angler, Trench, Vanguard concepts; exact form roster remains open. Backup race names: Umbral, Umbrath, Nyctari, Nyctral, Nyctans.
+5. **Varanth** — freshwater predator forms: Anaconda, Piranha, Amphibian, River Predator. Former working name: Rivermoor.
+6. **Mirekin** — swamp/wetland forms: Axolotl, Dragonfly (underwater fin-adapted wings), River Otter (warm brown palette), Tree Frog. Snapping Turtle is reserve; Leech excluded. Other explored name: Paludor.
 
-## Race taxonomy
-Six broad playable **races**, each with biological/engineered **forms**. Five approved categories: Human, Syntha, Oceanid, Abyssal, Rivermoor. Sixth: swamp/wetland category under exploration, NOT approved yet. All must plausibly pass/shoot/tackle/swim. Male/female presentations for every race/form. Individual athletic talent and training can surpass typical form tendencies; stats remain provisional and balanced. Early teams showcase largely single-race strengths; later teams mix rosters.
+## Locked gameplay scope
+**Races are cosmetic/visual distinctions only for now.** No race-wide stat bonuses, penalties, position limits, special move limits, or development restrictions. All races have equal athletic potential. Do not implement prior speculative race stat profiles.
 
-- **Human**: human athlete proportions; transparent face-cover underwater breather mandatory. Balanced/adaptable provisional.
-- **Syntha**: recognizably humanlike synthetic/android, subtle engineered skin seams/joints; transparent face-cover breather mandatory. Avoid alien/overly mechanical exaggeration. Precision/consistency/adaptability provisional.
-- **Oceanid** (formerly Aquid): Octarine (control), Mantae (mobility), Cartilagin (power), Crustal (defense); distinct forms, gilled aquatic anatomy.
-- **Abyssal**: deep-sea inspired, bioluminescent; Angler/Trench/Vanguard and further variants explored. Must have strongly different silhouettes/anatomy, intimidating yet approachable, with attention to plausible sexual dimorphism where useful. Forms not finalized.
-- **Rivermoor**: freshwater/amphibious, Anaconda and Piranha designs liked, plus original amphibious/river predator forms. Distinct swimming/physical styles.
-- **Sixth category**: swamp/wetland creature race to be explored next; no name or forms approved.
+Current game uses SPD, END, ATK, PAS, BLK, SHT, CAT; race design should not invent new live stats.
 
-## Production and art provenance
-Prior ChatGPT concept sheets are approved visual reference; do NOT replace with stock or new search-result thumbnails. Prior thumbnails are crops from those sheets, not production 24px sprites. Existing artwork is in ChatGPT conversation artifacts; binaries have NOT been committed to this repository in this update. Request/transfer final approved PNG sprite sheets before implementing. Do not treat provisional form stats or experimental images as final.
+## Future design investigation — NOT approved for implementation
+See GitHub issue #3: https://github.com/warrenbunker5-bit/sphere-league/issues/3
+Before altering player builds, study current game formulas and balance. Explore underlying speed, stamina, toughness, strength and special moves, and whether PAS/CAT/SHT/BLK ought to reflect derived technique/attributes rather than arbitrary race modifiers. Bring proposals for owner approval before changing mechanics.
 
-## Claude handoff
-Keep this as art-direction source of truth pending final user review. Avoid changing gameplay until race/form balance and art assets are signed off. Coordinate changes in docs/ai-collaboration branch.
+## Art asset status / handoff
+Approved prior concept sheets exist in ChatGPT conversations, but their original image files have not been confirmed uploaded to the shared folders or GitHub. A newly generated race-traits infographic was illustrative only and is **not** the canonical approved character art. Claude should use this specification for naming/identity and request exact approved source PNGs before production art integration.

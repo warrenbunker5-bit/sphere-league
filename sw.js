@@ -1,7 +1,7 @@
 // Bump VERSION on every release so phones pick up the new build.
-const VERSION = 'v21';
+const VERSION = 'v22';
 const CACHE = 'sphere-league-' + VERSION;
-const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png', './art/sphere_interior.jpg', './art/sphere_backdrop.jpg', './art/portraits.jpg', './art/portraits_jersey.png'];
+const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png', './art/sphere_interior.jpg', './art/sphere_backdrop.jpg', './art/portraits.jpg', './art/portraits_jersey.png', './art/swimmer_human.png', './art/swimmer_human_jersey.png', './art/icon_poison.png', './art/icon_sleep.png', './art/icon_hex.png', './art/icon_fire.png', './art/icon_swirl.png', './art/icon_ice.png', './art/icon_mirage.png', './art/icon_anchor.png', './art/icon_drain.png', './art/icon_shield.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));

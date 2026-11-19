@@ -20,6 +20,11 @@
 - [ ] Signature move chains
 - [ ] Deeper balance testing: about 50 matches per opponent, at mid levels
 
+## Races (v0.15)
+- [x] Six cosmetic races and their forms, drawn procedurally (no stat effects)
+- [ ] Production portraits from the approved source PNGs
+- [ ] Future stat/build research: GitHub #3 (not approved for implementation)
+
 ## Ideas from the v0.14 build
 - **Art direction pass** with ChatGPT using ART_BRIEF.md: palette, character portraits, cut-in layouts.
 - **Payroll:** salaries charged each season so the budget is a real squeeze.

@@ -2,7 +2,7 @@
 
 Shared project memory for the owner, Claude (primary developer) and ChatGPT (design consultant and reviewer). Keep it short and current. Record decisions and the reasons for them, not conversations.
 
-Last updated: 2026-11-18 (v0.13)
+Last updated: 2026-11-19 (v0.15, branch `feat/races-and-encounters`)
 
 ## Design philosophy (set by the owner)
 
@@ -46,13 +46,17 @@ Stats: SPD, END, ATK, PAS, BLK, SHT, CAT. HP is scaled to END, and `hpF` lowers 
 
 ## Known issues and observations
 
+- **Two v0.14s:** PR #2 (from v0.13) and the main v0.14 were built in parallel. `feat/races-and-encounters` merges both; PR #2 needs no separate merge once this lands.
+- **Race portraits are procedural placeholders**, drawn in code from the reference PNGs in Drive (02 - Approved Artwork). Production sprites still need the approved source PNGs (see `docs/SPHERE_LEAGUE_ART_DIRECTION.md`). Race and form are assigned from a hash of the player's name, so they stay stable across saves.
+- **Rivals in auto-play:** the Riptide AI still beats every rival in AI vs AI seasons. Rival players now level up at a pace tied to the Riptide's XP; human testing should decide whether rivals need more.
+
 - **Fixed in v0.14 (PR #2):** defence choice only with a ready special tackle; status effects hitting the keeper on a goal; pass odds aimed at the run target instead of the real pass spot; odds re-simulated every frame in the move sheet.
 - Displayed odds use 200 Monte Carlo samples (about ±7 points at 50%). Tested within 3 SE of real outcomes.
 - **Auto-match caveat:** `tests/sim.html` runs AI vs AI, so it measures mechanics, not human play.
 
 ## Current priorities
 
-1. **Encounter mechanics: built in v0.14 (PR #2), waiting for owner testing and merge.**
+1. **v0.15 (`feat/races-and-encounters`): waiting for owner testing and merge.** Includes PR #2.
 2. Owner backlog below, in the order the owner chooses.
 3. Improve the owner, Claude and ChatGPT workflow so the owner decides rather than relays messages (planned 2026-11-19).
 
@@ -72,7 +76,9 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - v0.11: pass, shoot and dribble menu; quit to title.
 - v0.12: season, scouting, bench, growth curves.
 - v0.13: engaged defenders block, honest halftime, scouting when making subs, formations.
-- v0.14: closest defender leads; defence choice every time with a free basic tackle and STOP %; the winner of an interaction is not affected by status (keeper exception on saves); pass odds match the real pass; cached 200-sample odds; `tests/` pages.
+- v0.14 (PR #2, encounters): closest defender leads; defence choice every time with a free basic tackle and STOP %; the winner of an interaction is not affected by status (keeper exception on saves); pass odds match the real pass; cached 200-sample odds; `tests/` pages.
+- v0.14 (main, built the same night on owner request): club facilities (Scouting Dept, Training Center, Recovery Pool, Film Room, Fan Deck); multi-round scouting with stat ranges; rival clubs with real rosters that develop, sign and release players; unrenewed contracts leave; league news; technique cut-ins and shot/pass sequences; a sleeping carrier, interceptor or keeper can't hold the ball.
+- v0.15: both v0.14 lines merged (conflicts settled by the #1 owner decisions); six cosmetic races drawn procedurally; race gallery.
 
 ## Decisions log
 

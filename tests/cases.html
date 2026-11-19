@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Sphere League - encounter cases</title>
+<style>body{font:13px/1.4 system-ui,sans-serif;background:#111;color:#ddd;padding:12px}.ok{color:#7dffb0}.bad{color:#ff8a8a}iframe{display:none}</style></head>
+<body>
+<h3>Encounter rule checks</h3>
+<p>Not part of the game. Loads <code>../index.html</code> in a hidden frame, places players by hand and checks the encounter rules. Results go to <code>window.RESULT</code>.</p>
+<div id="out">running...</div>
+<script>
+const out=document.getElementById('out');const results=[];
+function check(name,cond,detail){results.push({name,pass:!!cond,detail:detail||''});}
+(async()=>{
+  try{localStorage.removeItem('sphereLeague.v1');}catch(e){}
+  const f=document.createElement('iframe');f.src='../index.html';document.body.appendChild(f);
+  await new Promise(r=>f.onload=r);await new Promise(r=>setTimeout(r,300));
+  const W=f.contentWindow,SL=W.__SL,G=SL.G;SL.setSpeed(0);
+  W.localStorage.setItem=()=>{};// never write test state into the save
+  const realRandom=W.Math.random;
+  function fresh(team){
+    G.auto=false;SL.SAVE.tips={start:1,encounter:1,defend:1};SL.setupMatch(team||'undertow');G.cut=null;G.cuts=[];G.state='play';
+    for(const p of G.players){p.x=-500;p.y=-500;p.stun=0;p.immune=0;for(const k in p.fx)p.fx[k]=0;p.cd={};p.hp=p.end;p.sp=p.spMax;}
+    // park everyone far away; tests place who they need
+    G.players.forEach((p,i)=>{p.x=20+i*3;p.y=20;});
+    return {home:G.players.filter(p=>p.team===0),away:G.players.filter(p=>p.team===1)};
+  }
+  const at=(p,x,y)=>{p.x=x;p.y=y;p.vx=p.vy=0;};
+  const byPos=(list,pos)=>list.find(p=>p.pos===pos);
+
+  // 1. engagedOf is closest-first
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const [a,b,d]=[byPos(away,'LD'),byPos(away,'RD'),byPos(away,'MF')];
+   at(a,90+12,150);at(b,90+5,150);at(d,90-14,150);
+   const e=SL.engagedOf(c);check('engagedOf sorts closest first',e[0]===b&&e[1]===a&&e[2]===d,e.map(p=>p.name).join(','));}
+
+  // 2. simBreak: closest leads even when a farther defender has far more ATK
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const near=byPos(away,'LD'),far=byPos(away,'RD');
+   at(near,95,150);at(far,102,150);near.atk=5;far.atk=60;
+   const r=SL.simBreak(c,SL.engagedOf(c),null,null);check('simBreak lead = closest (not highest ATK)',r.top===near&&r.steps[0].p===near,'top='+r.top.name);}
+
+  // 3. aiTackleFor picks the closest defender
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const near=byPos(away,'MF'),far=byPos(away,'LD');
+   at(near,95,150);at(far,102,150);near.moves=['sting'];far.moves=['sting'];far.blk=90;
+   W.Math.random=()=>0;const tk=SL.aiTackleFor(SL.engagedOf(c));W.Math.random=realRandom;
+   check('AI tackle user = closest defender (not highest BLK)',tk&&tk.p===near,tk?tk.p.name:'none');}
+
+  // 4/5. defence screen opens with no special tackle, and with one
+  for(const withMove of [false,true]){
+    const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'LD');at(d,94,150);
+    d.moves=withMove?['sting']:[];G.carrier=c;c.immune=0;G.state='play';
+    SL.encounterCheck();
+    check('defence screen opens '+(withMove?'with a special tackle':'with NO special tackle'),G.state==='defEnc'&&G.defOdds&&G.defOdds.basic!=null&&(!withMove||G.defOdds.sting!=null),'state='+G.state+' odds='+JSON.stringify(G.defOdds));
+  }
+
+  // 6. tackle status / Drain only when the tackle wins
+  {const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'LD');at(d,94,150);d.moves=['sting'];
+   G.carrier=c;c.end=400;d.atk=1;SL.doBreak(c,[d],null,{p:d,id:'sting'});
+   check('carrier who breaks through is NOT poisoned by Sting Tackle',!(c.fx.poison>0),'poison='+c.fx.poison);}
+  {const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'LD');at(d,94,150);d.moves=['sting'];
+   G.carrier=c;c.end=1;d.atk=400;SL.doBreak(c,[d],null,{p:d,id:'sting'});
+   check('carrier who is tackled IS poisoned by Sting Tackle',c.fx.poison>0,'poison='+c.fx.poison);}
+  {const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'RD');at(d,94,150);d.moves=['drain'];
+   G.carrier=c;c.end=400;d.atk=1;d.hp=d.end*0.5;const h0=d.hp;SL.doBreak(c,[d],null,{p:d,id:'drain'});
+   check('Drain Tackle gives no HP when the carrier breaks through',d.hp<=h0,'tackler hp '+h0.toFixed(1)+' -> '+d.hp.toFixed(1));}
+  {const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'RD');at(d,94,150);d.moves=['drain'];
+   G.carrier=c;c.end=1;d.atk=400;d.hp=d.end*0.5;const h0=d.hp;SL.doBreak(c,[d],null,{p:d,id:'drain'});
+   check('Drain Tackle steals HP when the tackle wins',d.hp>h0,'tackler hp '+h0.toFixed(1)+' -> '+d.hp.toFixed(1)+' (contact cost ~2, drain +9)');}
+
+  // 7. status pass: interceptor unaffected, beaten defender affected
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const to=byPos(home,'LF');at(to,90,100);const d=byPos(away,'LD');at(d,94,150);
+   c.moves.push('viper');c.pas=1;d.blk=400;G.carrier=c;SL.doPass(c,to,[d],'viper');SL.landFlight();
+   check('defender who INTERCEPTS a Viper Pass is not poisoned',!(d.fx.poison>0)&&G.carrier===d,'poison='+d.fx.poison+' carrier='+(G.carrier&&G.carrier.name));}
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const to=byPos(home,'LF');at(to,90,100);const d=byPos(away,'LD');at(d,94,150);
+   c.moves.push('viper');c.pas=400;d.blk=1;G.carrier=c;SL.doPass(c,to,[d],'viper');SL.landFlight();
+   check('defender the Viper Pass gets PAST is poisoned',d.fx.poison>0&&G.carrier===to,'poison='+d.fx.poison);}
+
+  // 8. status shot: goal, save, block
+  const shotCase=(name,setup,expect)=>{const {home,away}=fresh();const c=byPos(home,'LF');at(c,90,60);const gk=SL.gkOf(1);at(gk,90,8);const bl=byPos(away,'LD');
+    c.moves.push('toxic');G.carrier=c;const en=setup(c,gk,bl);const s0=G.score[0];SL.doShot(c,en,'toxic');SL.landFlight();check(name,expect(c,gk,bl,G.score[0]>s0),'keeper poison='+gk.fx.poison+' blocker poison='+bl.fx.poison+' goal='+(G.score[0]>s0));};
+  shotCase('GOAL with Toxic Shot: keeper NOT poisoned',(c,gk)=>{c.sht=500;gk.cat=1;return [];},(c,gk,bl,goal)=>goal&&!(gk.fx.poison>0));
+  shotCase('SAVE of Toxic Shot: keeper IS poisoned (owner exception)',(c,gk)=>{c.sht=1;gk.cat=500;return [];},(c,gk,bl,goal)=>!goal&&gk.fx.poison>0);
+  shotCase('BLOCK of Toxic Shot: blocker NOT poisoned',(c,gk,bl)=>{c.sht=30;bl.blk=500;at(bl,94,60);return [bl];},(c,gk,bl,goal)=>!goal&&!(bl.fx.poison>0)&&!(gk.fx.poison>0));
+  shotCase('Toxic Shot gets PAST a blocker and scores: blocker poisoned, keeper not',(c,gk,bl)=>{c.sht=500;gk.cat=1;bl.blk=1;at(bl,94,60);return [bl];},(c,gk,bl,goal)=>goal&&bl.fx.poison>0&&!(gk.fx.poison>0));
+
+  // 9. pass target: odds and the real pass use the same spot
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,230);const t=byPos(home,'LF');at(t,90,170);t.run={x:30,y:60};
+   const live=SL.passTarget(t,false),queued=SL.passTarget(t,true);
+   check('live pass targets the receiver where they are',live===t);
+   check('queued (Plan) pass targets the receiver\'s run',queued.x===30&&queued.y===60);
+   const d=byPos(away,'MF');at(d,92,200);c.pas=16;d.blk=19;
+   const shown=SL.passOddsMap(c,[],null,false).get(t);let k=0;const N=3000;for(let i=0;i<N;i++)if(SL.simPass(c,t,[],null).ok)k++;const real=k/N;
+   const se=Math.sqrt(real*(1-real)/200);const oldWay=SL.odds(()=>SL.simPass(c,{x:30,y:60},[],null),200);check('live pass odds match the real pass (within 3 SE of 200 samples)',Math.abs(shown-real)<=3*se+0.01,'shown '+shown.toFixed(2)+' vs real '+real.toFixed(3)+' (old run-based odds would show '+oldWay.toFixed(2)+')');}
+
+  // 10. break odds calibration on the encounter screen
+  {const {home,away}=fresh();const c=byPos(home,'MF');at(c,90,150);const a=byPos(away,'LD'),b=byPos(away,'RD');at(a,96,150);at(b,84,152);
+   G.carrier=c;c.immune=0;G.state='play';SL.encounterCheck();
+   const shown=G.odds&&G.odds.brk;let k=0;const N=3000;for(let i=0;i<N;i++)if(SL.simBreak(c,G.enc,null,G.aiTackle).ok)k++;const real=k/N;const se=Math.sqrt(real*(1-real)/200);
+   check('encounter BREAK odds match outcomes (within 3 SE)',G.state==='encounter'&&Math.abs(shown-real)<=3*se+0.01,'shown '+(shown!=null?shown.toFixed(2):'-')+' vs real '+real.toFixed(3));}
+
+  // 11. defence STOP odds match outcomes
+  {const {home,away}=fresh();const c=byPos(away,'MF');at(c,90,150);const d=byPos(home,'LD');at(d,95,150);d.moves=['sting'];G.carrier=c;c.immune=0;G.state='play';SL.encounterCheck();
+   for(const id of ['basic','sting']){const shown=G.defOdds[id];let k=0;const N=3000;for(let i=0;i<N;i++)if(!SL.simBreak(c,G.enc,null,id==='basic'?null:{p:d,id}).ok)k++;const real=k/N;const se=Math.sqrt(real*(1-real)/200);
+     check('defence STOP odds ('+id+') match outcomes (within 3 SE)',Math.abs(shown-real)<=3*se+0.01,'shown '+shown.toFixed(2)+' vs real '+real.toFixed(3));}}
+
+  const pass=results.filter(r=>r.pass).length;
+  out.innerHTML=`<b>${pass}/${results.length} passed</b><br>`+results.map(r=>`<div class="${r.pass?'ok':'bad'}">${r.pass?'PASS':'FAIL'} - ${r.name} <small>${r.detail}</small></div>`).join('');
+  window.RESULT={pass,total:results.length,results};
+})().catch(e=>{out.textContent='ERROR '+e.stack;window.RESULT={error:String(e.stack)};});
+</script>
+</body></html>

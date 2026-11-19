@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Sphere League - balance sim</title>
+<style>body{font:13px/1.4 system-ui,sans-serif;background:#111;color:#ddd;padding:12px}pre{white-space:pre-wrap}iframe{display:none}</style></head>
+<body>
+<h3>Sphere League auto-match sim</h3>
+<p>Not part of the game. Loads a build of <code>index.html</code> in a hidden frame, seeds <code>Math.random</code>, turns on <code>G.auto</code> and plays fast matches with no drawing.
+Usage: <code>sim.html?target=../index.html&amp;n=50&amp;teams=practice,currents,breakers,undertow&amp;seed=1</code>. Results go to <code>window.RESULT</code> and the page.</p>
+<pre id="out">running...</pre>
+<script>
+const Q=new URLSearchParams(location.search);
+const TARGET=Q.get('target')||'../index.html',N=+(Q.get('n')||20),TEAMS_=(Q.get('teams')||'practice,currents,breakers,undertow').split(','),SEED=+(Q.get('seed')||1);
+const out=document.getElementById('out');
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function loadFrame(){return new Promise(res=>{const f=document.createElement('iframe');f.src=TARGET;f.onload=()=>res(f);document.body.appendChild(f);});}
+const KEYS=['goalsH','goalsA','breaks','tackles','passes','intercepts','shots','saves','loose','status','enc','enc1','enc2','enc3','enc4p'];
+function mean(a){return a.reduce((x,y)=>x+y,0)/a.length;}
+function ci(a){const m=mean(a),v=a.reduce((x,y)=>x+(y-m)**2,0)/Math.max(1,a.length-1);return 1.96*Math.sqrt(v/a.length);}
+async function run(){
+  // start every run from a brand-new save: the game persists XP to localStorage, which would leak between runs
+  try{localStorage.removeItem('sphereLeague.v1');}catch(e){}
+  const f=await loadFrame();const W=f.contentWindow;
+  await new Promise(r=>setTimeout(r,300));
+  const SL=W.__SL;SL.setSpeed(0);
+  const pristine=JSON.stringify(SL.SAVE);
+  W.localStorage.setItem=()=>{};// and never write back while simulating
+  if(Object.keys(SL.SAVE.players||{}).length)throw new Error('save was not fresh - another tab may be running the game');
+  const res={target:TARGET,n:N,seed:SEED,teams:{}};const t0=performance.now();
+  for(const team of TEAMS_){
+    const rows=[];
+    for(let i=0;i<N;i++){
+      // fresh save so XP/growth doesn't drift between matches
+      const fresh=JSON.parse(pristine);for(const k of Object.keys(SL.SAVE))delete SL.SAVE[k];Object.assign(SL.SAVE,fresh);SL.SAVE.pace=1;
+      W.Math.random=mulberry32(SEED*100003+i*7919+team.length);
+      const G=SL.G;G.auto=true;SL.setupMatch(team);G.auto=true;
+      const row=Object.fromEntries(KEYS.map(k=>[k,0]));let wasLoose=false,steps=0;
+      const fxPrev=new Map();
+      while(G.state!=='final'&&steps<40000){
+        steps++;
+        if(G.state==='half'){G.half=2;G.clock=120;G.players.forEach(p=>{p.hp=Math.min(p.end,p.hp+p.end*0.35);p.sp=Math.min(p.spMax,p.sp+p.spMax*0.5);for(const k in p.fx)p.fx[k]=0;});SL.kick(1);continue;}
+        const st0=G.state;
+        SL.update(0.034);
+        // away-carrier encounters go through the 'aiEnc' state in auto mode: record how many defenders were engaged
+        if(G.state==='aiEnc'&&st0!=='aiEnc'&&G.enc){const n=G.enc.length;row.enc++;row[n>=4?'enc4p':'enc'+Math.max(1,n)]++;}
+        if(G.loose&&!wasLoose)row.loose++;wasLoose=!!G.loose;
+        for(const p of G.players)for(const k of ['poison','sleep','weak','slow']){const key=p.name+k,v=p.fx[k]>0;if(v&&!fxPrev.get(key))row.status++;fxPrev.set(key,v);}
+      }
+      row.goalsH=G.score[0];row.goalsA=G.score[1];
+      for(const p of G.players){const s=p.stats;row.breaks+=s.br||0;row.tackles+=s.tk||0;row.passes+=s.pa||0;row.intercepts+=s.ic||0;row.shots+=s.sh||0;row.saves+=s.sv||0;}
+      rows.push(row);
+      out.textContent=`${team}: ${i+1}/${N}  (${((performance.now()-t0)/1000).toFixed(0)}s)`;
+      await new Promise(r=>setTimeout(r,0));
+    }
+    const agg={};for(const k of KEYS){const a=rows.map(r=>r[k]);agg[k]={mean:+mean(a).toFixed(2),ci:+ci(a).toFixed(2)};}
+    res.teams[team]={agg,rows};
+  }
+  res.seconds=+((performance.now()-t0)/1000).toFixed(1);
+  window.RESULT=res;
+  let s=`target ${TARGET}  n=${N}  seed=${SEED}  ${res.seconds}s\n`;
+  for(const t of TEAMS_){s+=`\n== ${t}\n`;for(const k of KEYS){const a=res.teams[t].agg[k];s+=`${k.padEnd(11)} ${String(a.mean).padStart(7)} ± ${a.ci}\n`;}}
+  out.textContent=s;
+}
+run().catch(e=>{out.textContent='ERROR '+e.stack;window.RESULT={error:String(e)};});
+</script>
+</body></html>

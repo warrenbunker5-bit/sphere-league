@@ -98,3 +98,8 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Undertow (the team with the most status moves) is about 15% less dangerous under the status rule (away goals 4.16 to 3.52 per auto-match; statuses landed down 24%). Retune it later?
 - Third and later defender falloff: deferred. 3+ engaged defenders happens only about once per 50 to 100 auto-matches.
 
+
+## Art assets (v0.16)
+- Approved art lives in `art/` and loads through `loadArt()` / `ART` in `index.html`. Every sprite has a procedural fallback, so the game still draws if an image fails to load.
+- `ball.png` / `ball_glow.png`; `sphere_interior.jpg` (drawn in world space, clipped to the sphere) and `sphere_backdrop.jpg` (screen backdrop, replaced the stadium).
+- `portraits.jpg` is a 5-column atlas of 288px cells in `PORTRAIT_KEYS` order; `portraits_jersey.png` is the matching jersey mask. `portraitFor()` tints the gray jersey to the team color and caches the result. Source sheets: Drive / Sphere League / 03 - Concepts In Review / portraits_A–E.png.

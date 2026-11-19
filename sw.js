@@ -1,5 +1,5 @@
 // Bump VERSION on every release so phones pick up the new build.
-const VERSION = 'v20';
+const VERSION = 'v21';
 const CACHE = 'sphere-league-' + VERSION;
 const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png', './art/sphere_interior.jpg', './art/sphere_backdrop.jpg', './art/portraits.jpg', './art/portraits_jersey.png'];
 

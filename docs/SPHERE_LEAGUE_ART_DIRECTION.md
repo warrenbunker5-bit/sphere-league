@@ -2,7 +2,7 @@
 Updated: 2026-11-19. Owner-approved design decisions. Coordinate with Claude; do not interpret speculative mechanics as implementation approval.
 
 ## Art direction
-Colorful, chunky, polished cartoon underwater athletes, clean readable silhouettes for mobile (180×320 logical canvas; avatars readable at ~24px). Consistent original Sphere League visual language, no unrelated stock/search thumbnails. Human and Synthari wear transparent face-cover underwater breathers. Keep race/form anatomy distinct and all athletes capable of swimming, passing, shooting and tackling. Male/female presentations envisioned across forms. Previous concept artwork in ChatGPT is the approved visual reference; exact original art binaries are not yet verified as transferred to GitHub or Drive. Do not replace them with newly generated lookalikes without owner approval.
+Colorful, chunky, polished cartoon underwater athletes, clean readable silhouettes for mobile (180×320 logical canvas; avatars readable at ~24px). Consistent original Sphere League visual language, no unrelated stock/search thumbnails. Human and Synthari wear transparent face-cover underwater breathers. Keep race/form anatomy distinct and all athletes capable of swimming, passing, shooting and tackling. Male/female presentations envisioned across forms. Previous concept artwork in ChatGPT is the approved visual reference; seven visual reference PNGs have now been uploaded to the shared Google Drive Approved Artwork folder. Do not replace them with newly generated lookalikes without owner approval.
 
 ## Final race names and forms
 1. **Human** — human athletes, transparent breather.

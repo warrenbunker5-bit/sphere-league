@@ -258,7 +258,7 @@ function lineBlockers(a,b,team,engaged,width){
 }
 function simBreak(c,defs,mv,tk){
   const atk=(S(c,'end')+powOf(c,mv))*rnd(0.85,1.15)*hpF(c);
-  let s=[...defs].sort((a,b)=>S(b,'atk')-S(a,'atk'));if(mv&&MOVES[mv].special==='mirage')s=s.slice(0,1);
+  let s=[...defs];if(mv&&MOVES[mv].special==='mirage')s=s.slice(0,1);// defs arrive closest-first (engagedOf)
   let def=0;const steps=[];s.forEach((d,i)=>{let b=S(d,'atk');if(tk&&tk.p===d)b+=powOf(d,tk.id);const v=b*rnd(0.85,1.15)*(i?0.45:1)*hpF(d);def+=v;steps.push({p:d,v});});
   return {ok:atk>def,atk,def,top:s[0],steps};
 }
@@ -279,14 +279,17 @@ function simShot(c,engaged,mv){
   const hit=(d,v)=>{touched.push(d);s-=v;steps.push({p:d,v});return s<=0;};
   for(const d of engaged){if(sb&&Math.random()<sb){steps.push({p:d,v:0,dodged:true});continue;}if(hit(d,S(d,'blk')*rnd(0.85,1.15)*(ei++?0.45:0.75)*(m&&m.special==='multi'?0.5:1)*hpF(d)))return {ok:false,by:d,first,raw,dl,blocked:true,touched,steps};}
   if(!(m&&m.special==='curve'))for(const k of lineBlockers(c,g,c.team,engaged,6))if(hit(k.o,S(k.o,'blk')*rnd(0.85,1.15)*0.32*hpF(k.o)))return {ok:false,by:k.o,first,raw,dl,blocked:true,touched,steps};
-  const gk=gkOf(1-c.team);touched.push(gk);
-  if(isOut(gk)){const gv=Math.random()<reflexOf(gk)?s+1:0;return {ok:s>gv,by:gk,first,raw,dl,s:Math.max(0,s),gv,touched,steps,asleep:true};}
+  // the keeper only "touches" the ball when they save it - a goal goes past them untouched
+  const gk=gkOf(1-c.team);
+  if(isOut(gk)){const gv=Math.random()<reflexOf(gk)?s+1:0;if(!(s>gv))touched.push(gk);return {ok:s>gv,by:gk,first,raw,dl,s:Math.max(0,s),gv,touched,steps,asleep:true};}
   const wall=gkWall(gk);const gv=(S(gk,'cat')+(wall?powOf(gk,'wall'):0))*rnd(0.72,1.12)*hpF(gk);
+  if(!(s>gv))touched.push(gk);
   return {ok:s>gv,by:gk,first,raw,dl,s:Math.max(0,s),gv,touched,steps,wall};
 }
 function odds(fn,n=100){let k=0;for(let i=0;i<n;i++)if(fn().ok)k++;return k/n;}
 const pct=v=>Math.round(v*100)+'%';
-const engagedOf=c=>opp(c).filter(o=>!isOut(o)&&dist(o,c)<16);
+// closest engaged defender first: they lead every encounter (break, pass, shot, AI tackle)
+const engagedOf=c=>opp(c).filter(o=>!isOut(o)&&dist(o,c)<16).sort((a,b)=>dist(a,c)-dist(b,c));
 const shotRange=c=>dist(c,attackGoal(c.team))<112;
 
 function why(t,col){G.why={t,col:col||'#ffe066',life:4.5};}
@@ -298,7 +301,8 @@ function doBreak(c,engaged,mv,tk){
   if(mv==='spin'){for(let i=0;i<24;i++){const a=i/24*6.28;part({x:c.x+Math.cos(a)*8,y:c.y+Math.sin(a)*8,vx:-Math.sin(a)*40,vy:Math.cos(a)*40,col:i%2?'#5fd3ff':'#ffffff',life:0.6,size:1.4});}}
   const shown=!G.auto&&(c.team===0||engaged.some(e=>e.team===0));if(!shown){popup('END '+Math.round(r.atk),c.x,c.y-14,'#ffe066');popup('ATK '+Math.round(r.def),r.top.x,r.top.y-6,'#ff8a8a');}
   const exhausted=c.hp<c.end*0.1;c.hp=Math.max(0,c.hp-r.def*0.25);engaged.forEach(d=>d.hp=Math.max(0,d.hp-2-r.atk*0.12));
-  if(tk&&tk.id){const tm=MOVES[tk.id];if(tm.special==='drain'){const amt=6+rankOf(tk.p,tk.id)*3;for(let i=0;i<14;i++)part({x:c.x+rnd(-3,3),y:c.y+rnd(-3,3),vx:(tk.p.x-c.x)*rnd(1.5,2.5),vy:(tk.p.y-c.y)*rnd(1.5,2.5),col:'#ff5a6e',life:0.5,size:rnd(1,1.8)});c.hp=Math.max(0,c.hp-amt);tk.p.hp=Math.min(tk.p.end,tk.p.hp+amt);popup('-'+amt+' HP',c.x,c.y-6,'#ff5a6e');}else applyFx([c],tk.p,tk.id);}
+  // tackle effects (status or Drain) only land if the tackle wins - a carrier who breaks through is unaffected
+  if(tk&&tk.id&&!r.ok){const tm=MOVES[tk.id];if(tm.special==='drain'){const amt=6+rankOf(tk.p,tk.id)*3;for(let i=0;i<14;i++)part({x:c.x+rnd(-3,3),y:c.y+rnd(-3,3),vx:(tk.p.x-c.x)*rnd(1.5,2.5),vy:(tk.p.y-c.y)*rnd(1.5,2.5),col:'#ff5a6e',life:0.5,size:rnd(1,1.8)});c.hp=Math.max(0,c.hp-amt);tk.p.hp=Math.min(tk.p.end,tk.p.hp+amt);popup('-'+amt+' HP',c.x,c.y-6,'#ff5a6e');}else applyFx([c],tk.p,tk.id);}
   if(c.team===0&&!G.auto)why(r.ok?'Broke through: your END '+Math.round(r.atk)+' beat their ATK '+Math.round(r.def):'Tackled: their ATK '+Math.round(r.def)+' beat your END '+Math.round(r.atk)+(engaged.length>1?' - pass when outnumbered':''),r.ok?'#7dffb0':'#ff8a8a');
   else if(c.team===1&&!G.auto)why(r.ok?'They broke your tackle: END '+Math.round(r.atk)+' vs ATK '+Math.round(r.def):'Your tackle won: ATK '+Math.round(r.def)+' vs END '+Math.round(r.atk),r.ok?'#ff8a8a':'#7dffb0');
   teamOf(0).forEach(h=>{if(engaged.includes(h))stat(h,'pr');});
@@ -334,7 +338,8 @@ function landFlight(){
   const f=G.flight,r=f.result,c=f.from;G.flight=null;
   if(f.kind==='shot'||(f.mv&&(c.team===0||r.steps.some(x=>x.p.team===0))))pushCut({k:'result',kind:f.kind,a:c,raw:r.raw,dl:r.dl,steps:r.steps,ok:r.ok,gv:r.gv,gk:f.kind==='shot'&&!r.blocked?r.by:null,asleep:r.asleep,mv:f.mv,dur:1.8});
   burst(f.tgt.x,f.tgt.y,f.mv?MOVES[f.mv].col:'#ffffff',f.mv?22:8,f.mv);
-  if(f.mv)applyFx(r.touched||[],c,f.mv);
+  // winner isn't affected: a defender who intercepts or blocks the ball shrugs off its status; a keeper who saves it does not (owner rule)
+  if(f.mv){let hitList=r.touched||[];if(!r.ok&&r.by&&!(f.kind==='shot'&&!r.blocked))hitList=hitList.filter(t=>t!==r.by);applyFx(hitList,c,f.mv);}
   if(f.kind==='pass'){
     if(c.team===0&&!G.auto)why(r.ok?'Pass connected':'Picked off by '+r.by.name+' (BLK '+S(r.by,'blk')+') - try a closer mate or a pass move',r.ok?'#7dffb0':'#ff8a8a');
     if(r.ok&&f.tgt.fx.sleep>0){f.tgt.fx.sleep=0;f.tgt.stun=0.8;popup('WOKE UP!',f.tgt.x,f.tgt.y-22,'#d9c8ff',6);const dx=f.tgt.x-f.x0,dy=f.tgt.y-f.y0,d=Math.hypot(dx,dy)||1;looseBall(f.tgt.x,f.tgt.y,dx/d*30+rnd(-10,10),dy/d*30+rnd(-10,10),c.team,'CAN\'T CATCH - LOOSE BALL!');G.state='play';if(G.clock<=0)endPeriod();return;}
@@ -481,22 +486,26 @@ function encounterCheck(){
   if(c.team===0&&!G.auto){
     G.state='encounter';G.enc=engaged;G.menu=null;G.pickPass=false;G.passMove=null;sfx('enc');pushCut({k:'enc',a:c,d:[...engaged].sort((a,b)=>S(b,'blk')-S(a,'blk')),dur:1.0});showTip('encounter');
     G.aiTackle=aiTackleFor(engaged);
-    G.odds={brk:odds(()=>simBreak(c,engaged,null,G.aiTackle)),shot:shotRange(c)?odds(()=>simShot(c,engaged)):null,pass:passOddsMap(c,engaged,null)};
+    G.odds={brk:odds(()=>simBreak(c,engaged,null,G.aiTackle),200),shot:shotRange(c)?odds(()=>simShot(c,engaged),200):null,pass:passOddsMap(c,engaged,null)};
   }else if(c.team===1){
-    const lead=engaged.filter(e=>e.team===0).sort((a,b)=>dist(a,c)-dist(b,c))[0];
-    G.enc=engaged;G.defLead=lead;pushCut({k:'enc',a:c,d:lead?[lead,...engaged.filter(e=>e!==lead)]:engaged,dur:0.9});
+    const lead=engaged[0];// closest
+    G.enc=engaged;G.defLead=lead;pushCut({k:'enc',a:c,d:engaged,dur:0.9});
     const tackles=lead?movesOfType(lead,'tackle').filter(id=>canUse(lead,id)):[];
-    if(!G.auto&&tackles.length){G.state='defEnc';sfx('enc');}
+    // the human always picks their tackle - basic tackle is always on offer, special tackles when owned
+    if(!G.auto&&lead){G.state='defEnc';G.defOdds=defStopOdds(c,engaged,lead);sfx('enc');}
     else{let tk=null;if(G.auto&&tackles.length&&Math.random()<0.6)tk={p:lead,id:tackles[0]};startAiEnc(tk);}
   }else{
     const tk=aiTackleFor(engaged);const ch=aiChoose(c,engaged,tk);execChoice(c,ch,engaged,tk);
   }
 }
 function aiTackleFor(engaged){
-  const lead=[...engaged].sort((a,b)=>S(b,'blk')-S(a,'blk'))[0];if(!lead)return null;
+  const lead=engaged[0];if(!lead)return null;// closest defender (engagedOf sorts by distance)
   const t=movesOfType(lead,'tackle').filter(id=>canUse(lead,id));
   return t.length&&Math.random()<0.7?{p:lead,id:t[(Math.random()*t.length)|0]}:null;
 }
+// Chance each tackle stops the carrier IF they try a basic break. Computed once when the defence screen opens.
+// It's conditional on purpose: the carrier picks break/pass/shot after the defender commits, so we don't guess that.
+function defStopOdds(c,engaged,lead){const m={};[null,...movesOfType(lead,'tackle')].forEach(id=>{m[id||'basic']=1-odds(()=>simBreak(c,engaged,null,id?{p:lead,id}:null),200);});return m;}
 function startAiEnc(tk){
   const c=G.carrier;G.homeTackle=tk;const ch=aiChoose(c,G.enc,tk);G.aiChoice=ch;G.state='aiEnc';G.timer=0.75;
   popup(ch.label,c.x,c.y-30,'#ffb36b',8);if(!G.auto)sfx('enc');
@@ -575,7 +584,10 @@ function updatePlayers(dt){
   const ps=G.players;
   for(let i=0;i<ps.length;i++)for(let j=i+1;j<ps.length;j++){const a=ps[i],b=ps[j];const dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy);if(d<7&&d>0.01){const f=(7-d)/2,nx=dx/d,ny=dy/d;if(a!==c){a.x-=nx*f;a.y-=ny*f;}if(b!==c){b.x+=nx*f;b.y+=ny*f;}}}
 }
-function passOddsMap(c,engaged,mv){const m=new Map();teamOf(c.team).forEach(t=>{if(t!==c){const tgt=t.run?{x:t.run.x,y:t.run.y}:t;m.set(t,odds(()=>simPass(c,tgt,engaged,mv),60));}});return m;}
+// Where a pass to t will actually go. Live encounters and aiming freeze play, so the ball goes to the receiver's
+// current spot. A queued pass (Pause + Plan) fires once the receiver reaches their run, so it aims at the run.
+const passTarget=(t,queued)=>queued&&t.run?{x:t.run.x,y:t.run.y}:t;
+function passOddsMap(c,engaged,mv,queued){const m=new Map();teamOf(c.team).forEach(t=>{if(t!==c)m.set(t,odds(()=>simPass(c,passTarget(t,queued),engaged,mv),200));});return m;}
 
 // =================== INPUT ===================
 let buttons=[];
@@ -625,10 +637,10 @@ cv.addEventListener('pointerup',()=>{
   if(G.state==='paused')refreshPlanOdds();
 });
 function openAim(c){G.state='aim';G.enc=[];G.aiTackle=null;G.menu=null;G.pickPass=false;G.passMove=null;c.target=null;G.steer=false;
-  const en=engagedOf(c);G.enc=en;G.odds={pass:passOddsMap(c,en,null),shot:shotRange(c)?odds(()=>simShot(c,en),100):null};}
+  const en=engagedOf(c);G.enc=en;G.odds={pass:passOddsMap(c,en,null),shot:shotRange(c)?odds(()=>simShot(c,en),200):null};}
 function refreshPlanOdds(){
   const c=G.carrier;G.odds=null;if(!c||c.team!==0)return;
-  G.odds={pass:passOddsMap(c,[],G.queued.pass?G.queued.pass.mv:null),shot:shotRange(c)?odds(()=>simShot(c,[]),80):null};
+  G.odds={pass:passOddsMap(c,[],G.queued.pass?G.queued.pass.mv:null,true),shot:shotRange(c)?odds(()=>simShot(c,[]),200):null};
 }
 
 // =================== UPDATE ===================
@@ -926,9 +938,13 @@ function sheet(title,opts){
 }
 function moveOpts(c,type,act){
   const en=G.enc,tk=G.aiTackle;const list=[null,...movesOfType(c,type)];
+  // this runs every frame while the sheet is open: simulate each option once and cache it
+  if(!G.moCache||G.moCache.type!==type||G.moCache.c!==c||G.moCache.en!==en||G.moCache.tk!==tk)G.moCache={type,c,en,tk,od:{}};
+  const cache=G.moCache.od;
   return list.map(id=>{
-    const m=id?MOVES[id]:null;const can=canUse(c,id);
-    let od=null;if(type==='shot')od=odds(()=>simShot(c,en,id),60);else if(type==='break')od=odds(()=>simBreak(c,en,id,tk),60);
+    const m=id?MOVES[id]:null;const can=canUse(c,id);const key=id||'basic';
+    if(!(key in cache)){cache[key]=type==='shot'?odds(()=>simShot(c,en,id),200):type==='break'?odds(()=>simBreak(c,en,id,tk),200):null;}
+    const od=cache[key];
     const rk=id?' '+'★'.repeat(rankOf(c,id)):'';
     const cdLeft=id&&c.cd[id]>0?Math.ceil(c.cd[id]):0;
     return {label:(m?m.name:'Basic '+TYPE_LABEL[type].toLowerCase())+rk,sub:m?(cdLeft?'Recharging - ready in '+cdLeft+'s':(c.sp<spCost(c,id)?'Not enough SP (needs '+spCost(c,id)+', have '+Math.floor(c.sp)+')':m.desc+' · SP '+spCost(c,id)+' of '+Math.floor(c.sp))):'Free - no SP',col:m?shade(m.col,0.62):'#3a4a8a',
@@ -997,9 +1013,19 @@ function drawPanel(){
     if(G.menu==='shot')sheet('SHOOT',moveOpts(c,'shot',id=>doShot(c,G.enc,id)));
     if(G.menu==='pass')sheet('PICK A PASS, THEN TAP A TEAMMATE',moveOpts(c,'pass',id=>{G.passMove=id;G.pickPass=true;G.menu=null;G.odds.pass=passOddsMap(c,[],id);}));
   }else if(st==='defEnc'){
-    const d=G.defLead;const t=movesOfType(d,'tackle');const opts=[null,...t].slice(0,3);const w=(172-(opts.length-1)*4)/opts.length;
-    opts.forEach((id,i)=>{const m=id?MOVES[id]:null;btn(4+i*(w+4),by,w,bh,m?m.name.toUpperCase():'TACKLE',()=>startAiEnc(id?{p:d,id}:null),{col:m?shade(m.col,0.62):'#2f7ae0',size:m&&m.name.length>11?5.5:6.5,sub:m?(d.cd[id]>0?'ready in '+Math.ceil(d.cd[id])+'s':'SP '+spCost(d,id)+'/'+Math.floor(d.sp)+' '+'★'.repeat(rankOf(d,id))):'basic',subc:'#ffffff',subsize:5,disabled:id&&!canUse(d,id)});});
-    txt('Tackle moves hit if they try to break',CX,H-6,6,'#ffe066','center',{stroke:false});
+    const d=G.defLead;const t=movesOfType(d,'tackle');const DO=G.defOdds||{};
+    // more than two special tackles won't fit as buttons: offer basic + a MOVES sheet (like the attack side)
+    if(t.length>2){
+      const so=DO.basic;const w=84;
+      btn(4,by,w,bh,'TACKLE',()=>startAiEnc(null),{col:'#2f7ae0',size:6.5,sub:(so!=null?'STOP '+pct(so)+' · ':'')+'free',subc:so>0.6?'#7dffb0':so>0.35?'#ffe066':'#ff8a8a',subsize:5});
+      btn(92,by,w,bh,'MOVES',()=>{G.menu='tackle';},{col:'#7a5fd0',size:6.5,sub:t.length+' TACKLES',subc:'#ffffff',subsize:5});
+      txt('STOP % = chance to stop them if they break',CX,H-6,5.6,'#ffe066','center',{stroke:false});
+      if(G.menu==='tackle')sheet('TACKLE',t.map(id=>{const m=MOVES[id],ok=canUse(d,id),p=DO[id];return {label:m.name+' '+'★'.repeat(rankOf(d,id)),sub:d.cd[id]>0?'Recharging - ready in '+Math.ceil(d.cd[id])+'s':(d.sp<spCost(d,id)?'Not enough SP (needs '+spCost(d,id)+', have '+Math.floor(d.sp)+')':m.desc+' · SP '+spCost(d,id)+' of '+Math.floor(d.sp)),col:shade(m.col,0.62),right:p!=null?pct(p):'',rc:p>0.6?'#7dffb0':p>0.35?'#ffe066':'#ff8a8a',disabled:!ok,fn:()=>startAiEnc({p:d,id})};}));
+      return;
+    }
+    const opts=[null,...t];const w=(172-(opts.length-1)*4)/opts.length;
+    opts.forEach((id,i)=>{const m=id?MOVES[id]:null,so=DO[id||'basic'],ready=!id||canUse(d,id);btn(4+i*(w+4),by,w,bh,m?m.name.toUpperCase():'TACKLE',()=>startAiEnc(id?{p:d,id}:null),{col:m?shade(m.col,0.62):'#2f7ae0',size:m&&m.name.length>11?5.5:6.5,sub:(ready&&so!=null?'STOP '+pct(so)+' · ':'')+(m?(d.cd[id]>0?'ready in '+Math.ceil(d.cd[id])+'s':'SP '+spCost(d,id)+' '+'★'.repeat(rankOf(d,id))):'free'),subc:ready&&so!=null?(so>0.6?'#7dffb0':so>0.35?'#ffe066':'#ff8a8a'):'#ffffff',subsize:5,disabled:!ready});});
+    txt('STOP % = chance to stop them if they break',CX,H-6,5.6,'#ffe066','center',{stroke:false});
   }
 }
 function banner(t,col,sub){
@@ -1141,7 +1167,7 @@ function drawTitle(){
   btn(18,190,70,22,'QUICK MATCH',()=>{G.state='quick';},{col:'#5a4fb0',size:5.6,sub:'exhibition',subsize:4.4,subc:'#ffe066'});
   btn(92,190,70,22,'HOW TO',()=>{G.state='howto';},{col:'#5a4fb0',size:6,sub:'PLAY',subc:'#ffe066',subsize:4.6});
   btn(18,218,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
-  txt('PROTOTYPE v0.13',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.14',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function drawQuick(){
   overlay(0.9);txt('QUICK MATCH',CX,16,13,'#7ff0e0');txt('Exhibitions earn XP but don\'t count for the season',CX,30,5,'#cfe3ff','center',{stroke:false});
@@ -1402,7 +1428,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-window.__SL={G,setSpeed:s=>SPEED=s,setupMatch,update,kick:t=>kickoff(t),SAVE,MOVES,buttons:()=>buttons,simShot,odds};
+window.__SL={G,setSpeed:s=>SPEED=s,setupMatch,update,kick:t=>kickoff(t),SAVE,MOVES,buttons:()=>buttons,simShot,odds,simBreak,simPass,engagedOf,aiTackleFor,defStopOdds,passTarget,passOddsMap,doBreak,doPass,doShot,landFlight,encounterCheck,gkOf,teamOf,render};
 </script>
 <button id="upd">New version available — tap to update</button>
 <script>

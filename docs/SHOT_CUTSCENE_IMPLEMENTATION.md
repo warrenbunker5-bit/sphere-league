@@ -15,7 +15,7 @@ Make shot resolution a short, exciting, legible underwater sports highlight on t
 1. GOAL: shooter wind-up; ball streak with team-color energy; each encountered defender gets a quick dodge or power-loss beat; final keeper showdown; ball breaches goal mouth; energetic ripple/bubble burst, short freeze-frame, GOAL stamp and score update. Avoid implying goal before outcome confirmed.
 2. SAVED / REFLEX SAVE: keeper lunges or dives and catches/deflects the ball; strong splash/radial impact, short freeze-frame, SAVED verdict; support existing asleep-keeper/reflex-save outcome labels as determined by game.
 3. BLOCKED / INTERCEPTED: defender lunges into lane and stops ball, sharp contact burst and ricochet/possession cue; stop shot sequence immediately at that defender; distinguish shot BLOCKED from pass INTERCEPTED according to current mechanics. Do not show keeper confrontation afterward.
-4. DODGED: near-miss, slight slow motion and streak passing defender, DODGED pop; ball continues to next defender or keeper. This is an intermediate event, NOT a new terminal shot result.
+4. BEATEN: near-miss, slight slow motion and streak passing defender, BEATEN pop; ball continues to next defender or keeper. This is an intermediate event, NOT a new terminal shot result.
 
 ## Approximate animation beats (adjust for number of defenders)
 - 0–350 ms: shooter wind-up and launch, camera/ball focus.
@@ -30,7 +30,7 @@ The four-panel cutscene concept was reviewed and approved by Warren in ChatGPT. 
 Art reference folder: https://drive.google.com/drive/folders/1ou1-zF41beeAnyw5Se0S7ow7cSYB0Rsg
 
 ## Acceptance criteria
-- Four distinct visual reactions including dodge as nonterminal beat.
+- Four distinct visual reactions including BEATEN as nonterminal beat.
 - Shot power deductions and winner are faithful to actual mechanics.
 - Correct branch and possession on goal, save, block/intercept; no false goal or extra keeper beat after defender stop.
 - Looks readable at 180×320, 12 athletes on arena; no loss of current quick-scene behavior.

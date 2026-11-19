@@ -111,6 +111,10 @@ const TYPE_LABEL={pass:'PASS',shot:'SHOT',break:'BREAK',tackle:'TACKLE',save:'KE
 const SAVE_KEY='sphereLeague.v1';
 let SAVE={players:{}};
 try{const s=JSON.parse(localStorage.getItem(SAVE_KEY));if(s&&s.players)SAVE=s;}catch(e){}
+// fresh career: wipes the team, league and progress but keeps settings
+function freshSave(){return {players:{},pace:SAVE.pace,scenes:SAVE.scenes,tips:SAVE.tips,tac:SAVE.tac,reset015:true};}
+if(!SAVE.reset015){SAVE=freshSave();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}}
+function newCareer(){SAVE=freshSave();try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}location.reload();}
 SAVE.beaten=SAVE.beaten||{};SAVE.pace=SAVE.pace||0.8;SAVE.tac=SAVE.tac||{form:'balanced',cover:'zone'};SAVE.learned=SAVE.learned||{};SAVE.copyFails=SAVE.copyFails||{};SAVE.tips=SAVE.tips||{};
 function persist(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(SAVE));}catch(e){}}
 function psave(name){return SAVE.players[name]||(SAVE.players[name]={xp:0,uses:{}});}
@@ -1508,7 +1512,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.15',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.15.1',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}
@@ -1528,7 +1532,10 @@ function drawClub(){
     if(lv<3){const c=FAC_COST[lv];btn(124,y+5,46,16,'UPGRADE',()=>upgradeFac(k),{col:SAVE.team.money>=c?f.col:'#3a3a5a',size:5.4,sub:'$'+c,subsize:4.6,subc:SAVE.team.money>=c?'#ffffff':'#ff8a8a',disabled:SAVE.team.money<c});}
   });
   txt('Gate money and prizes pay for upgrades. Upgrades are permanent.',CX,H-34,4.4,'#8fa0d8','center',{stroke:false});
-  backBtn(G.clubFrom||'title');
+  backBtn(G.clubFrom||'title');btn(114,H-26,60,18,'NEW CAREER',()=>{G.resetAsk=true;},{col:'#7a3a4a',size:5.6});
+  if(G.resetAsk){buttons=[];ctx.fillStyle='rgba(12,9,32,0.75)';ctx.fillRect(0,0,W,H);rrect(ctx,16,100,148,84,9);ctx.fillStyle='#1f1a48';ctx.fill();ctx.lineWidth=1.4;ctx.strokeStyle='#c0485e';ctx.stroke();
+    txt('START A NEW CAREER?',CX,114,8.5,'#ffffff');wrapTxt('Your team, levels, money, club upgrades and league history are wiped. Settings stay.',CX,128,128,5.2,'#cfe3ff',3,'center');
+    btn(24,158,62,20,'START OVER',()=>{G.resetAsk=false;newCareer();},{col:'#c0485e',size:6});btn(94,158,62,20,'KEEP',()=>{G.resetAsk=false;},{col:'#2fb36a',size:7});}
 }
 // ---------- scouting ----------
 function drawScout(){

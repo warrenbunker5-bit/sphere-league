@@ -1,7 +1,7 @@
 // Bump VERSION on every release so phones pick up the new build.
-const VERSION = 'v17';
+const VERSION = 'v18';
 const CACHE = 'sphere-league-' + VERSION;
-const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png'];
+const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));

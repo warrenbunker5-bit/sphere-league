@@ -1066,7 +1066,13 @@ function drawPlayerBody(p){
   if(p.stun>0.3&&p.fx.sleep<=0){ctx.globalAlpha=0.5;ellipse(p.x,p.y+10,7,2.4,null,'#ffffff',0.8);ctx.globalAlpha=1;}
   if(p.stun>0){for(let i=0;i<3;i++){const a=G.time*6+i*2.1;txt('★',x+Math.cos(a)*5,y-12+Math.sin(a)*1.5,3.8,'#ffe066','center',{stroke:false});}}
 }
+// =================== ART ASSETS (approved art from the design pass; procedural drawing is the fallback) ===================
+const ART={};function loadArt(k,src){const im=new Image();im.onload=()=>{ART[k]=im;};im.src=src;}
+loadArt('ball','art/ball.png');loadArt('ballGlow','art/ball_glow.png');
 function drawBall(x,y,glow){
+  const sp=glow?ART.ballGlow:ART.ball;
+  if(sp){if(glow){ctx.save();ctx.shadowColor=glow;ctx.shadowBlur=7*K;ellipse(x,y,2.6,2.6,alpha(glow,0.6));ctx.restore();}
+    const s=glow?7.4:6.2;ctx.save();ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';ctx.drawImage(sp,x-s/2,y-s/2,s,s);ctx.restore();return;}
   if(glow){ctx.save();ctx.shadowColor=glow;ctx.shadowBlur=7*K;ellipse(x,y,3,3,glow);ctx.restore();}
   const gr=ctx.createRadialGradient(x-1,y-1,0.3,x,y,2.9);gr.addColorStop(0,'#ffffff');gr.addColorStop(1,'#bcd6ff');
   ctx.beginPath();ctx.arc(x,y,2.8,0,7);ctx.fillStyle=gr;ctx.fill();
@@ -1512,7 +1518,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.15.1',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.16',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}

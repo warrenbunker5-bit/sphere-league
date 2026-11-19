@@ -83,8 +83,10 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 |---|---|---|
 | 2026-11-18 | Adopted a three-way collaboration: owner, Claude, ChatGPT (see `AI_REVIEW_GUIDELINES.md`) | Get independent views on design, balance and code, while the owner keeps final say |
 | 2026-11-18 | First development focus is encounter mechanics | Owner priority |
+| 2026-11-18 | **Closest engaged defender is the lead** in every encounter type (break, pass, shot, human and AI) | The defender who made contact; easy to read on screen |
+| 2026-11-18 | **Default status rule: whoever wins an interaction is not affected by the loser's status move.** For example, a carrier who breaks through a Sting Tackle is not poisoned. | The move failed, so its effect shouldn't land. This is the standing default; exceptions may be added later |
 
 ## Open questions
 
-- Should a status shot that scores apply its effect to the keeper? (Owner to confirm the intended rule.)
+- The status rule against the keeper: under "winner isn't affected", a keeper who saves a Dream Shot or Toxic Shot wouldn't be affected, and on a goal the shot never touched the keeper. Shot status moves would then never affect keepers, which conflicts with the roadmap's "sleep the keeper, then score" strategy. Owner to decide how shots and keepers work.
 - For the basic tackle: should the player choose between a plain tackle and a special tackle every time, and should a plain tackle cost anything (HP or nothing)?

@@ -46,19 +46,15 @@ Stats: SPD, END, ATK, PAS, BLK, SHT, CAT. HP is scaled to END, and `hpF` lowers 
 
 ## Known issues and observations
 
-- **Player-controlled defence only appears when your lead defender has a tackle move that is ready to use.** Otherwise the AI resolves the encounter (`encounterCheck`, `if(!G.auto&&tackles.length)`). A defender with no special tackle never gets to choose a basic tackle. This falls under Priority 1.
-- **Shot status effects on the keeper when a goal is scored.** `simShot` always adds the keeper to `touched`, so on a goal `landFlight` still tries to apply the effect to the keeper. Sleep is cleared straight away by the goal reset, but Poison, Weak and Slow stay. The owner reported something here; the intended rule (should a shot that scores past the keeper affect them?) still needs confirming.
-- Displayed odds come from Monte Carlo sampling (40 to 100 runs), so they are only accurate to within a few percent. Pass odds are worked out against the receiver's run target, but the pass itself goes to the receiver's current spot. Check this under Priority 1.
+- **Fixed in v0.14 (PR #2):** defence choice only with a ready special tackle; status effects hitting the keeper on a goal; pass odds aimed at the run target instead of the real pass spot; odds re-simulated every frame in the move sheet.
+- Displayed odds use 200 Monte Carlo samples (about ±7 points at 50%). Tested within 3 SE of real outcomes.
+- **Auto-match caveat:** `tests/sim.html` runs AI vs AI, so it measures mechanics, not human play.
 
 ## Current priorities
 
-1. **Encounter mechanics (current task, needs owner approval before implementation):**
-   - Player-controlled defensive encounters every time, not only when a tackle move is available.
-   - A basic tackle option even without special tackle moves.
-   - Keep special tackles as they are.
-   - Review how multiple defenders combine in breaks, passes and shots.
-   - Breakthrough, tackle and loose-ball outcomes.
-   - Displayed odds should match actual outcomes.
+1. **Encounter mechanics: built in v0.14 (PR #2), waiting for owner testing and merge.**
+2. Owner backlog below, in the order the owner chooses.
+3. Improve the owner, Claude and ChatGPT workflow so the owner decides rather than relays messages (planned 2026-11-19).
 
 ## Owner backlog (ideas raised 2026-11-18, not yet approved for building)
 
@@ -66,7 +62,7 @@ Stats: SPD, END, ATK, PAS, BLK, SHT, CAT. HP is scaled to END, and `hpF` lowers 
 - **Stats guide:** a tutorial or info screen on which stats help with which actions.
 - **Time-out button:** one per half, for substitutions, possibly with options to restore a player's stamina or HP.
 - **"Get open" attacking formation:** forwards move much more to shake off defenders, at a stamina cost.
-- **Shot status effects and the keeper:** decided (see Decisions log); fix goes with the encounter work.
+- **Shot status effects and the keeper:** done in v0.14 (see Decisions log).
 
 Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, landscape mode, contract expiry, choosing who studies which opponent, a soft cap on dominant players, signature move chains, and balance testing.
 
@@ -76,6 +72,7 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - v0.11: pass, shoot and dribble menu; quit to title.
 - v0.12: season, scouting, bench, growth curves.
 - v0.13: engaged defenders block, honest halftime, scouting when making subs, formations.
+- v0.14: closest defender leads; defence choice every time with a free basic tackle and STOP %; the winner of an interaction is not affected by status (keeper exception on saves); pass odds match the real pass; cached 200-sample odds; `tests/` pages.
 
 ## Decisions log
 
@@ -87,7 +84,11 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 | 2026-11-18 | **Default status rule: whoever wins an interaction is not affected by the loser's status move.** For example, a carrier who breaks through a Sting Tackle is not poisoned. | The move failed, so its effect shouldn't land. This is the standing default; exceptions may be added later |
 
 | 2026-11-18 | **Keeper exception:** a keeper who saves a status shot (catches it) *is* affected. On a goal the shot never touched the keeper, so the keeper is not affected. | Keeps the "sleep the keeper, then score" strategy alive |
+| 2026-11-18 | Encounter plan approved (P1, P3–P6); P2 auto-resolve deferred; extra-defender falloff left for later | Owner, after ChatGPT review on #1 |
+| 2026-11-18 | Basic tackle is free (no SP, no extra HP cost); Drain only steals HP on a won tackle | ChatGPT review, owner agreed |
 
 ## Open questions
 
-- For the basic tackle: should the player choose between a plain tackle and a special tackle every time, and should a plain tackle cost anything (HP or nothing)?
+- Undertow (the team with the most status moves) is about 15% less dangerous under the status rule (away goals 4.16 to 3.52 per auto-match; statuses landed down 24%). Retune it later?
+- Third and later defender falloff: deferred. 3+ engaged defenders happens only about once per 50 to 100 auto-matches.
+

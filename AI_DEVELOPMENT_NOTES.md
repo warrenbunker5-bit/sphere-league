@@ -82,7 +82,6 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 | 2026-11-18 | First development focus is encounter mechanics | Owner priority |
 | 2026-11-18 | **Closest engaged defender is the lead** in every encounter type (break, pass, shot, human and AI) | The defender who made contact; easy to read on screen |
 | 2026-11-18 | **Default status rule: whoever wins an interaction is not affected by the loser's status move.** For example, a carrier who breaks through a Sting Tackle is not poisoned. | The move failed, so its effect shouldn't land. This is the standing default; exceptions may be added later |
-
 | 2026-11-18 | **Keeper exception:** a keeper who saves a status shot (catches it) *is* affected. On a goal the shot never touched the keeper, so the keeper is not affected. | Keeps the "sleep the keeper, then score" strategy alive |
 | 2026-11-18 | Encounter plan approved (P1, P3–P6); P2 auto-resolve deferred; extra-defender falloff left for later | Owner, after ChatGPT review on #1 |
 | 2026-11-18 | Basic tackle is free (no SP, no extra HP cost); Drain only steals HP on a won tackle | ChatGPT review, owner agreed |

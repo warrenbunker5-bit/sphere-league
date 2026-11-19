@@ -56,7 +56,7 @@ Stats: SPD, END, ATK, PAS, BLK, SHT, CAT. HP is scaled to END, and `hpF` lowers 
 
 ## Current priorities
 
-1. **v0.15 (`feat/races-and-encounters`): waiting for owner testing and merge.** Includes PR #2.
+1. **v0.15 shipped to `main` (2026-11-19).** Includes PR #2. Owner is play-testing.
 2. Owner backlog below, in the order the owner chooses.
 3. Improve the owner, Claude and ChatGPT workflow so the owner decides rather than relays messages (planned 2026-11-19).
 
@@ -90,6 +90,7 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 | 2026-11-18 | **Default status rule: whoever wins an interaction is not affected by the loser's status move.** For example, a carrier who breaks through a Sting Tackle is not poisoned. | The move failed, so its effect shouldn't land. This is the standing default; exceptions may be added later |
 | 2026-11-18 | **Keeper exception:** a keeper who saves a status shot (catches it) *is* affected. On a goal the shot never touched the keeper, so the keeper is not affected. | Keeps the "sleep the keeper, then score" strategy alive |
 | 2026-11-18 | Encounter plan approved (P1, P3–P6); P2 auto-resolve deferred; extra-defender falloff left for later | Owner, after ChatGPT review on #1 |
+| 2026-11-19 | Tested, requested updates ship straight to `main` so the phone app updates automatically; the AIs must not build unrequested features without owner input | Owner wants to play updates right away |
 | 2026-11-18 | Basic tackle is free (no SP, no extra HP cost); Drain only steals HP on a won tackle | ChatGPT review, owner agreed |
 
 ## Open questions

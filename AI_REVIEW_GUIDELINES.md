@@ -78,12 +78,12 @@ Neither AI follows the other blindly or dismisses it just because it differs. Th
 
 ## GitHub safeguards
 
-- Make meaningful changes on feature branches, never as experiments on `main`.
-- Keep each pull request to one feature or a related group of changes, and explain each file changed and why.
-- Test before asking for review, and always keep a working version of the game.
+- **Finished, tested updates go straight to `main`** so the owner's phone app updates automatically (GitHub Pages deploys from `main`). The owner tests by playing. (Owner, 2026-11-19.)
+- **Don't let the AIs run ahead of the owner.** Claude and ChatGPT must not go back and forth and build features, design changes or balance changes the owner hasn't asked for or approved. Proposals wait for the owner's input; requested work ships.
+- Test before shipping, and always keep a working version of the game on `main`.
+- Branches and pull requests are optional, for risky or experimental work the owner wants to look at before it ships.
 - Don't remove existing features without the owner's approval.
 - Record every major balance change in `AI_DEVELOPMENT_NOTES.md`.
 - Don't touch unrelated systems.
-- Don't merge significant changes until the owner has reviewed and approved them.
 
 **The owner makes all final decisions.**

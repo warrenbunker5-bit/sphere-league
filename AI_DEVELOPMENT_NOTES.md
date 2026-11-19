@@ -66,7 +66,7 @@ Stats: SPD, END, ATK, PAS, BLK, SHT, CAT. HP is scaled to END, and `hpF` lowers 
 - **Stats guide:** a tutorial or info screen on which stats help with which actions.
 - **Time-out button:** one per half, for substitutions, possibly with options to restore a player's stamina or HP.
 - **"Get open" attacking formation:** forwards move much more to shake off defenders, at a stamina cost.
-- **Shot status effects and the keeper:** see Known issues.
+- **Shot status effects and the keeper:** decided (see Decisions log); fix goes with the encounter work.
 
 Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, landscape mode, contract expiry, choosing who studies which opponent, a soft cap on dominant players, signature move chains, and balance testing.
 
@@ -86,7 +86,8 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 | 2026-11-18 | **Closest engaged defender is the lead** in every encounter type (break, pass, shot, human and AI) | The defender who made contact; easy to read on screen |
 | 2026-11-18 | **Default status rule: whoever wins an interaction is not affected by the loser's status move.** For example, a carrier who breaks through a Sting Tackle is not poisoned. | The move failed, so its effect shouldn't land. This is the standing default; exceptions may be added later |
 
+| 2026-11-18 | **Keeper exception:** a keeper who saves a status shot (catches it) *is* affected. On a goal the shot never touched the keeper, so the keeper is not affected. | Keeps the "sleep the keeper, then score" strategy alive |
+
 ## Open questions
 
-- The status rule against the keeper: under "winner isn't affected", a keeper who saves a Dream Shot or Toxic Shot wouldn't be affected, and on a goal the shot never touched the keeper. Shot status moves would then never affect keepers, which conflicts with the roadmap's "sleep the keeper, then score" strategy. Owner to decide how shots and keepers work.
 - For the basic tackle: should the player choose between a plain tackle and a special tackle every time, and should a plain tackle cost anything (HP or nothing)?

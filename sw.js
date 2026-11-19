@@ -1,7 +1,7 @@
 // Bump VERSION on every release so phones pick up the new build.
-const VERSION = 'v22';
+const VERSION = 'v23';
 const CACHE = 'sphere-league-' + VERSION;
-const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png', './art/sphere_interior.jpg', './art/sphere_backdrop.jpg', './art/portraits.jpg', './art/portraits_jersey.png', './art/swimmer_human.png', './art/swimmer_human_jersey.png', './art/icon_poison.png', './art/icon_sleep.png', './art/icon_hex.png', './art/icon_fire.png', './art/icon_swirl.png', './art/icon_ice.png', './art/icon_mirage.png', './art/icon_anchor.png', './art/icon_drain.png', './art/icon_shield.png'];
+const CORE = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './art/ball.png', './art/ball_glow.png', './art/sphere_interior.jpg', './art/sphere_backdrop.jpg', './art/portraits.jpg', './art/portraits_jersey.png', './art/swimmer_human.png', './art/swimmer_human_jersey.png', './art/icon_poison.png', './art/icon_sleep.png', './art/icon_hex.png', './art/icon_fire.png', './art/icon_swirl.png', './art/icon_ice.png', './art/icon_mirage.png', './art/icon_anchor.png', './art/icon_drain.png', './art/icon_shield.png', './art/crest_lakewood_riptide.png', './art/crest_mile_high_currents.png', './art/crest_boulder_breakers.png', './art/crest_aurora_anglers.png', './art/crest_durango_divers.png', './art/crest_pikes_peak_undertow.png'];
 
 self.addEventListener('install', e => {
   e.waitUntil(caches.open(CACHE).then(c => c.addAll(CORE)));

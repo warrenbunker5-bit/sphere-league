@@ -127,7 +127,7 @@ const SKINS=['#f6d0ae','#e8b48a','#c98d60','#a46a42','#7d4c2c','#5e3820'];
 const HAIRS=['#2a1a10','#6a3a18','#e0b85a','#18161c','#9a3f1d','#d9d9e0'];
 const STAT_KEYS=['spd','end','atk','pas','blk','sht','cat'];
 const TEAMS={
-  riptide:{name:'Lakewood Riptide',short:'LKW',col:'#22b8a8',acc:'#f4f4ea',shorts:'#0e4f57',gk:'#f2c94c',
+  riptide:{name:'Lakewood Riptide',short:'LKW',col:'#00c8f5',acc:'#ffffff',shorts:'#064a91',gk:'#ffb900',
     roster:[
       ['NAVARRO','LF',[22,20,18,16,8,24,6],2,0,0,[['curve',1],['toxic',2],['avalanche',5]]],
       ['PIKE','RF',[24,18,16,18,8,21,6],0,2,1,[['spin',1],['dream',1],['mirage',4]]],
@@ -137,15 +137,15 @@ const TEAMS={
       ['RUIZ','GK',[14,24,8,14,10,4,18],3,1,2,[['wall',1],['rocket',3]]]]},
   practice:{style:{form:'balanced',cover:'zone'},name:'Red Rocks Scrubs',short:'RRS',col:'#c2643a',acc:'#f4e3c8',shorts:'#5a2e1c',gk:'#a8b4c8',mult:0.72,tier:'PRACTICE',rank:1,ai:{chase:0.7,maxCh:1,think:1.5},xpMult:0.5,
     names:['DOYLE','PRATT','LUND','GREER','MOSS','TATE'],moves:[[],[],['viper'],['sting'],[],[]]},
-  currents:{style:{form:'balanced',cover:'man'},name:'Mile High Currents',short:'MHC',col:'#f07a2a',acc:'#1c2a52',shorts:'#1c2a52',gk:'#8fd14f',mult:0.9,tier:'ROOKIE',rank:1,ai:{chase:0.8,maxCh:1,think:1.1},
+  currents:{style:{form:'balanced',cover:'man'},name:'Mile High Currents',short:'MHC',col:'#7433cc',acc:'#ffd447',shorts:'#32156d',gk:'#65f05a',mult:0.9,tier:'ROOKIE',rank:1,ai:{chase:0.8,maxCh:1,think:1.1},
     names:['VOSS','KANE','ORTEGA','BRANT','HOLLIS','MARSH'],moves:[[],[],['rocket'],['drain'],[],[]]},
-  breakers:{style:{form:'bunker',cover:'zone'},name:'Boulder Breakers',short:'BLD',col:'#e6be3a',acc:'#1b1b1b',shorts:'#2a2a2a',gk:'#4fc3f7',mult:1.0,tier:'PRO',rank:2,ai:{chase:0.9,maxCh:2,think:0.75},
+  breakers:{style:{form:'bunker',cover:'zone'},name:'Boulder Breakers',short:'BLD',col:'#e86a24',acc:'#34363d',shorts:'#383a40',gk:'#39d9f2',mult:1.0,tier:'PRO',rank:2,ai:{chase:0.9,maxCh:2,think:0.75},
     names:['STEELE','QUINN','DARBY','LOWRY','FINCH','CARSON'],moves:[['spin'],[],['hex'],[],['anchor'],['wall']]},
-  anglers:{style:{form:'counter',cover:'zone'},name:'Aurora Anglers',short:'AUR',col:'#e04a6a',acc:'#2a1830',shorts:'#2a1830',gk:'#f2d34c',mult:0.95,tier:'PRO',rank:2,ai:{chase:0.88,maxCh:2,think:0.8},
+  anglers:{style:{form:'counter',cover:'zone'},name:'Aurora Anglers',short:'AUR',col:'#a4ef18',acc:'#151a20',shorts:'#304b17',gk:'#e94fc8',mult:0.95,tier:'PRO',rank:2,ai:{chase:0.88,maxCh:2,think:0.8},
     names:['MORROW','PACE','DIAZ','KELLER','STROM','ABARA'],moves:[['curve'],[],['rocket'],['anchor'],[],['wall']]},
-  divers:{style:{form:'spread',cover:'man'},name:'Durango Divers',short:'DUR',col:'#3f9a4a',acc:'#f2f2e0',shorts:'#1e4a24',gk:'#ff9f2e',mult:0.88,tier:'ROOKIE',rank:1,ai:{chase:0.82,maxCh:1,think:1.0},
+  divers:{style:{form:'spread',cover:'man'},name:'Durango Divers',short:'DUR',col:'#c92f38',acc:'#d8a547',shorts:'#671d28',gk:'#39c9e8',mult:0.88,tier:'ROOKIE',rank:1,ai:{chase:0.82,maxCh:1,think:1.0},
     names:['BOONE','CRUZ','EMERY','HALE','RIGGS','NASH'],moves:[[],['spin'],[],['sting'],[],[]]},
-  undertow:{style:{form:'press',cover:'man'},name:'Pikes Peak Undertow',short:'PPU',col:'#8b55d6',acc:'#d9dde8',shorts:'#3a2366',gk:'#ff6f61',mult:0.9,tier:'ALL-STAR',rank:3,ai:{chase:0.92,maxCh:2,think:0.7},
+  undertow:{style:{form:'press',cover:'man'},name:'Pikes Peak Undertow',short:'PPU',col:'#e5f4ff',acc:'#2859cc',shorts:'#254aa8',gk:'#ff8b32',mult:0.9,tier:'ALL-STAR',rank:3,ai:{chase:0.92,maxCh:2,think:0.7},
     names:['SABLE','KNOX','REYES','DRAKE','VANCE','HOLT'],moves:[['toxic'],['dream'],['viper','lullaby'],['sting'],['sleeper'],['wall']]}
 };
 const AWAY_BASE=[['LF',22,20,18,15,8,23,6],['RF',21,19,17,17,9,21,6],['MF',20,24,18,23,13,14,8],['LD',18,25,21,13,22,8,10],['RD',18,26,22,12,22,7,10],['GK',14,24,8,13,10,4,21]];

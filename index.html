@@ -1083,7 +1083,7 @@ const CREST_FILES={riptide:'lakewood_riptide',currents:'mile_high_currents',brea
 for(const k in CREST_FILES)loadArt('crest_'+k,'art/crest_'+CREST_FILES[k]+'.png');
 function drawCrest(key,x,y,size,a=1){const im=ART['crest_'+key];if(!im)return false;ctx.save();ctx.globalAlpha*=a;ctx.imageSmoothingQuality='high';ctx.drawImage(im,x-size/2,y-size/2,size,size);ctx.restore();return true;}
 // swimmer sprites by form (art/swimmer_<slug>.png + _jersey mask); forms without one fall back to the drawn swimmer
-const SWIM_SLUGS=['human','human_f','synthari_m','synthari_f','octarine','mantae','cartilagin','crustal','tree_frog','angler','trench','anaconda','piranha','river_predator','axolotl'];
+const SWIM_SLUGS=['human','human_f','synthari_m','synthari_f','octarine','mantae','cartilagin','crustal','tree_frog','angler','trench','anaconda','piranha','river_predator','axolotl','vanguard','amphibian','dragonfly','river_otter'];
 const swimSlug=p=>{const f=p.form||(p.race==='synthari'?'Synthari':'Human');if(f==='Human')return p.sex==='f'&&SWIM_SLUGS.includes('human_f')?'human_f':'human';if(f==='Synthari')return 'synthari_'+(p.sex==='f'?'f':'m');return f.toLowerCase().replace(/ /g,'_');};
 SWIM_SLUGS.forEach(k=>{loadArt('swim_'+k,'art/swimmer_'+k+'.png');loadArt('swimMask_'+k,'art/swimmer_'+k+'_jersey.png');});loadArt('jersey','art/portraits_jersey.png');
 const PORTRAIT_KEYS=['Human_m','Human_f','Synthari_m','Synthari_f','Octarine','Mantae','Cartilagin','Crustal','Angler','Trench','Vanguard','Anaconda','Piranha','Amphibian','River Predator','Axolotl','Dragonfly','River Otter','Tree Frog'],PCELL=288,PCOLS=5,portraitCache={};
@@ -1605,7 +1605,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.19.1',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.20',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}

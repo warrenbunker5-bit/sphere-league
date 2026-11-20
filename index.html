@@ -1133,7 +1133,10 @@ function btn(x,y,w,h,label,fn,o={}){
   rrect(ctx,x,y,w,h,r);ctx.fillStyle=o.disabled?'#5e5c80':shade(col,pr?1.75:1.55);ctx.fill();ctx.lineWidth=0.9;ctx.strokeStyle='#020a1b';ctx.stroke();
   const bw=Math.min(1.5,h*0.09);rrect(ctx,x+bw,y+bw,w-2*bw,h-2*bw,Math.max(1,r-bw));const gr=ctx.createLinearGradient(0,y,0,y+h);gr.addColorStop(0,shade(col,pr?0.95:0.82));gr.addColorStop(1,shade(col,pr?0.7:0.55));ctx.fillStyle=gr;ctx.fill();
   rrect(ctx,x+bw+1,y+bw+1,w-2*bw-2,h-2*bw-2,Math.max(1,r-bw-1));ctx.lineWidth=0.4;ctx.strokeStyle=alpha(shade(col,1.7),0.55);ctx.stroke();
-  rrect(ctx,x+bw+1.5,y+bw+0.9,w-2*bw-3,h*0.3,Math.max(1,r-bw-1));ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fill();
+  // Tech-fantasy button trim: restrained circuitry, not coral decoration.
+   ctx.save();ctx.strokeStyle=alpha(shade(col,2),o.disabled?0.13:0.48);ctx.lineWidth=0.7;
+   ctx.beginPath();ctx.moveTo(x+8,y+4);ctx.lineTo(x+16,y+4);ctx.moveTo(x+w-16,y+h-4);ctx.lineTo(x+w-8,y+h-4);ctx.stroke();
+   ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fillRect(x+Math.max(19,w*0.24),y+2,w*0.5,1);ctx.restore();
   if(o.icon&&iconOf(o.icon)){drawIcon(o.icon,x+bw+h*0.42,y+h/2,h*0.78);x+=h*0.62;w-=h*0.62;}
   const tc=o.disabled?'#a8a6c4':'#ffffff';
   if(o.left){txt(label,x+6,y+(o.sub?h*0.36:h/2),o.size||7,tc,'left');if(o.sub)txt(o.sub,x+6,y+h*0.74,5,o.subc||'#ffe066','left');if(o.right)txt(o.right,x+w-5,y+h/2,o.rsize||6,o.rc||'#ffe066','right');}
@@ -1222,6 +1225,8 @@ function moveOpts(c,type,act){
 function drawHUD(){
   rrect(ctx,2,2,W-4,15,6);ctx.fillStyle='rgba(12,9,32,0.85)';ctx.fill();ctx.lineWidth=1;ctx.strokeStyle='#3d3584';ctx.stroke();
   const hc=TEAMS.riptide.col,ac=G.away.col;
+   // Thin arena telemetry track makes the HUD read as a futuristic scoreboard.
+   ctx.fillStyle='rgba(83,218,245,0.38)';ctx.fillRect(33,15,114,0.7);
   rrect(ctx,5,4.5,24,10,3);ctx.fillStyle=hc;ctx.fill();ctx.strokeStyle=OL;ctx.stroke();txt('LKW',17,9.8,6,'#ffffff');
   rrect(ctx,W-29,4.5,24,10,3);ctx.fillStyle=ac;ctx.fill();ctx.strokeStyle=OL;ctx.stroke();txt(G.away.short,W-17,9.8,6,'#ffffff');
   const hcr=drawCrest('riptide',33.5,9.5,13),acr=drawCrest(G.awayKey,W-33.5,9.5,13);
@@ -1266,10 +1271,12 @@ function drawPanel(){
   }else if(st==='encounter'){
     const o=G.odds;
     const nP=movesOfType(c,'pass').length,nS=movesOfType(c,'shot').length,nB=movesOfType(c,'break').length;
-    btn(4,by,54,bh,'PASS',()=>{if(nP)G.menu='pass';else{G.pickPass=true;G.passMove=null;}},{col:G.pickPass?'#d99a2a':'#2f7ae0',sub:G.pickPass?(G.passMove?MOVES[G.passMove].name:'Basic'):(nP?nP+' MOVE'+(nP>1?'S':''):'tap a mate'),subc:'#ffffff',size:7});
-    btn(63,by,54,bh,'SHOOT',()=>{if(nS)G.menu='shot';else doShot(c,G.enc,null);},{col:'#e0553a',sub:o.shot==null?'too far':pct(o.shot)+(nS?' +'+nS:''),disabled:o.shot==null,size:7});
-    btn(122,by,54,bh,'BREAK',()=>{if(nB)G.menu='break';else doBreak(c,G.enc,null,G.aiTackle);},{col:'#2fb36a',sub:pct(o.brk)+(nB?' +'+nB:''),size:7});
-    txt(G.pickPass?'Now tap a teammate to pass':'Stats decide it - choose',CX,H-6,6,'#ffe066','center',{stroke:false});
+    btn(4,by,41,bh,'PASS',()=>{if(nP)G.menu='pass';else{G.pickPass=true;G.passMove=null;}},{col:G.pickPass?'#d99a2a':'#2f7ae0',sub:G.pickPass?(G.passMove?MOVES[G.passMove].name:'Basic'):(nP?nP+' MOVE'+(nP>1?'S':''):'tap a mate'),subc:'#ffffff',size:7});
+    btn(48,by,41,bh,'SHOOT',()=>{if(nS)G.menu='shot';else doShot(c,G.enc,null);},{col:'#e0553a',sub:o.shot==null?'too far':pct(o.shot)+(nS?' +'+nS:''),disabled:o.shot==null,size:7});
+    btn(92,by,41,bh,'BREAK',()=>{if(nB)G.menu='break';else doBreak(c,G.enc,null,G.aiTackle);},{col:'#2fb36a',sub:pct(o.brk)+(nB?' +'+nB:''),size:7});
+    btn(136,by,40,bh,'SPECIAL',()=>{G.menu='special';},{col:'#8b3ac9',size:5.5,sub:'MOVES',subsize:4.4,subc:'#ffffff',disabled:!(nP+nS+nB)});
+    txt(G.pickPass?'Now tap a teammate to pass':'Choose your play - specials use SP',CX,H-6,5.5,'#ffe066','center',{stroke:false});
+    if(G.menu==='special')sheet('SPECIAL TECHNIQUES',[{label:'PASS TECHNIQUES',sub:nP+' available',col:'#328fe8',disabled:!nP,fn:()=>{G.menu='pass';}},{label:'SHOT TECHNIQUES',sub:nS+' available',col:'#e0553a',disabled:!nS,fn:()=>{G.menu='shot';}},{label:'BREAK TECHNIQUES',sub:nB+' available',col:'#36b878',disabled:!nB,fn:()=>{G.menu='break';}}].filter(x=>!x.disabled));
     if(G.menu==='shot')sheet('SHOOT',moveOpts(c,'shot',id=>doShot(c,G.enc,id)));
     if(G.menu==='break')sheet('BREAK',moveOpts(c,'break',id=>doBreak(c,G.enc,id,G.aiTackle)));
     if(G.menu==='pass')sheet('PICK A PASS, THEN TAP A TEAMMATE',moveOpts(c,'pass',id=>{G.passMove=id;G.pickPass=true;G.menu=null;G.odds.pass=passOddsMap(c,G.enc,id);}));
@@ -1465,7 +1472,7 @@ function drawSeq(c,t,out){
   // keeper showdown vignette while the ball glides in slow motion
   const gkN=n[stop].gk?n[stop]:null;
   if(gkN&&t>gkN.a+0.12&&t<gkN.at+0.3){const k=Math.min(clamp((t-gkN.a-0.12)/0.2,0,1),clamp((gkN.at+0.3-t)/0.2,0,1));const vg=ctx.createRadialGradient(gkN.x,gkN.y,18,gkN.x,gkN.y,150);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,12,'+(0.55*k)+')');ctx.fillStyle=vg;ctx.fillRect(0,15,W,PANEL-15);
-    ctx.globalAlpha=out*k;txt('SHOWDOWN',gkN.x-34,gkN.y-30,5.5,'#ffe066','center',{sw:0.22});ctx.globalAlpha=out;}
+    ctx.globalAlpha=out*k;txt('KEEPER SHOWDOWN',90,62,8,'#ffe066','center',{sw:0.22});ctx.globalAlpha=out;}
   // outcome bursts
   const lastN=n[stop],tE=t-lastN.at;
   if(c.kind==='shot'&&c.ok&&tE>0.3&&tE<1.3){const k=clamp((tE-0.3)/0.8,0,1),gc=mine?TEAMS.riptide.col:G.away.col;
@@ -1486,7 +1493,10 @@ function drawSeq(c,t,out){
   // verdict
   if(t>end+0.15){const k=clamp((t-end-0.15)/0.2,0,1),good=mine?c.ok:!c.ok;
     const title=c.kind==='shot'?(c.ok?'GOAL!':c.gk?(c.asleep?'REFLEX SAVE!':'SAVED!'):'BLOCKED!'):(c.ok?'PASS COMPLETE':'INTERCEPTED!');
-    ctx.save();ctx.translate(90,74);ctx.rotate(-0.05);const sc=1.7-0.7*ease(k);ctx.scale(sc,sc);ctx.globalAlpha=out*k;txt(title,0,0,c.kind==='shot'&&c.ok?20:14,good?'#7dffb0':'#ff8a8a','center',{sw:0.32});ctx.restore();ctx.globalAlpha=out*k;
+    ctx.save();ctx.translate(90,74);ctx.rotate(-0.05);const sc=1.7-0.7*ease(k);ctx.scale(sc,sc);ctx.globalAlpha=out*k;
+     const verdictCol=c.kind==='shot'?(c.ok?'#ffd66a':lastN.gk?'#7deaff':'#ff9a75'):(good?'#7dffb0':'#ff8a8a');
+     ctx.fillStyle='rgba(7,16,39,0.83)';rrect(ctx,-84,-17,168,35,7);ctx.fill();ctx.strokeStyle=verdictCol;ctx.lineWidth=1.4;ctx.stroke();
+     txt(title,0,0,c.kind==='shot'&&c.ok?20:14,verdictCol,'center',{sw:0.32});ctx.restore();ctx.globalAlpha=out*k;
     const fin=Math.max(0,c.raw-(c.dl||0)-n.slice(0,stop+1).filter(d=>!d.gk&&!d.rcv&&!d.dodged).reduce((a,d)=>a+d.v,0));
     const line=c.kind==='shot'&&c.gk?'Shot power '+Math.round(fin)+' vs keeper '+Math.round(c.gv||0):c.ok?Math.round(fin)+' power left - caught':'Power ran out - stolen by '+n[stop].p.name;
     txt(line,90,168,5.8,'#ffffff','center',{sw:0.22});
@@ -1605,7 +1615,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.20',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('SPHERE LEAGUE · TECH-FANTASY TEST BUILD',CX,H-14,4.6,'#92a5c7','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}

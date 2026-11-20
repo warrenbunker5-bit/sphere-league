@@ -745,14 +745,14 @@ function s2w(pt){const c=G.cam;return {x:(pt.x-VX)/c.z+c.x,y:(pt.y-VY)/c.z+c.y};
 function w2s(pt){const c=G.cam;return {x:(pt.x-c.x)*c.z+VX,y:(pt.y-c.y)*c.z+VY};}
 function updateCam(dt){
   const c=G.cam,inG=G.players.length&&!['title','howto','roster','quick','team','scout','season','club','gallery'].includes(G.state);let tx=CX,ty=CY,tz=FITZ;
-  if(inG&&G.state!=='paused'&&G.state!=='half'&&G.state!=='final'){tz=G.flight&&G.flight.kind==='shot'&&!G.auto?1+0.55*clamp(G.flight.t/G.flight.dur*1.6,0,1):1;const b=G.flight?{x:G.flight.x,y:G.flight.y}:G.loose?{x:G.loose.x,y:G.loose.y}:(G.carrier||{x:CX,y:CY});tx=b.x;ty=b.y+(G.carrier&&G.carrier.team===0?-14:14);}
+  if(inG&&G.state!=='paused'&&G.state!=='half'&&G.state!=='final'){tz=PLAYZ+(G.flight&&G.flight.kind==='shot'&&!G.auto?0.5*clamp(G.flight.t/G.flight.dur*1.6,0,1):0);const b=G.flight?{x:G.flight.x,y:G.flight.y}:G.loose?{x:G.loose.x,y:G.loose.y}:(G.carrier||{x:CX,y:CY});tx=b.x;ty=b.y+(G.carrier&&G.carrier.team===0?-14:14);}
   const k=Math.min(1,dt*3.2);c.z+=(tz-c.z)*k;
   const hw=W/2/c.z,hh=(PANEL-15)/2/c.z,mx=Math.max(0,R+14-hw),my=Math.max(0,R+16-hh);
   c.x+=(clamp(tx,CX-mx,CX+mx)-c.x)*k;c.y+=(clamp(ty,CY-my,CY+my)-c.y)*k;
   c.x=clamp(c.x,CX-mx,CX+mx);c.y=clamp(c.y,CY-my,CY+my);
 }
 function update(dt){
-  updateCam(dt);
+  G.dtLast=dt;updateCam(dt);
   if(G.cut){const t0=G.cut.t;G.cut.t+=dt*(G.cut.speed||1);cutEvents(G.cut,t0,G.cut.t);if(G.cut.t>=G.cut.dur)G.cut=G.cuts.shift()||null;return;}
   if(G.beat>0){G.beat-=dt;dt*=0.3;}
   for(const q of G.parts){q.life-=dt;q.x+=q.vx*dt;q.y+=q.vy*dt;q.vx*=0.94;q.vy*=0.94;}G.parts=G.parts.filter(q=>q.life>0);
@@ -1028,12 +1028,12 @@ function drawPlayerBody(p){
   const td=p.team===0?TEAMS.riptide:G.away,J=p.isGK?td.gk:td.col,f=p.face?-1:1;
   const asleep=p.fx.sleep>0,t=p.anim,sw=asleep?0:Math.sin(t*2.2);
   const x=p.x,y=p.y+Math.sin(t*1.3)*0.6;
-  // Team recognition pass: distinct cyan/amber silhouettes and marker shapes.
-  // The field is small, so identify athletes without requiring jersey-color perception.
-  if(!p.isGK){const own=p.team===0,markerY=p.y+10;
-    ctx.save();ctx.globalAlpha=0.86;ctx.strokeStyle=own?'#70f5ff':'#ffb36b';ctx.lineWidth=own?1.3:1;
-    if(own){ctx.beginPath();ctx.arc(p.x,markerY,5.6,0,Math.PI*2);ctx.stroke();}
-    else{ctx.setLineDash([2.4,2.4]);ctx.beginPath();ctx.moveTo(p.x-5.8,markerY);ctx.lineTo(p.x+5.8,markerY);ctx.stroke();ctx.setLineDash([]);}
+  // Team recognition: ring for your team, dashed bar for the opponent, both in that team's own color.
+  const tcol=p.team===0?TEAMS.riptide.col:G.away.col,dsc=1+0.1*clamp((p.y-CY)/R,-1,1);
+  if(!p.isGK){const markerY=p.y+10*dsc;
+    ctx.save();ctx.globalAlpha=0.9;ctx.strokeStyle=OL;ctx.lineWidth=2.2;
+    if(p.team===0){ctx.beginPath();ctx.ellipse(p.x,markerY,6*dsc,2.3*dsc,0,0,7);ctx.stroke();ctx.strokeStyle=tcol;ctx.lineWidth=1.2;ctx.stroke();}
+    else{ctx.setLineDash([2.4,2]);ctx.beginPath();ctx.moveTo(p.x-6*dsc,markerY);ctx.lineTo(p.x+6*dsc,markerY);ctx.stroke();ctx.strokeStyle=tcol;ctx.lineWidth=1.2;ctx.stroke();ctx.setLineDash([]);}
     ctx.restore();
   }
   if(p===G.carrier){ctx.save();ctx.shadowColor='#ffd24a';ctx.shadowBlur=4*K;ellipse(p.x,p.y+10,7.5+Math.sin(G.time*6)*0.6,2.8,null,'#ffd24a',1.2);ctx.restore();}
@@ -1041,19 +1041,15 @@ function drawPlayerBody(p){
   const spd=Math.hypot(p.vx,p.vy),swim=asleep?0:clamp((spd-4)/14,0,1);
   let want=0;if(swim>0){want=Math.atan2(p.vy,p.vx)+Math.PI/2;while(want>Math.PI)want-=2*Math.PI;while(want<-Math.PI)want+=2*Math.PI;want*=swim*0.9;}
   p.rot=p.rot||0;let dr=want-p.rot;while(dr>Math.PI)dr-=2*Math.PI;while(dr<-Math.PI)dr+=2*Math.PI;p.rot+=dr*0.15;
-  const swS=swimmerFor(p,J);
-  if(swS){// approved swimmer sprite: 0-1 tread, 2-3 swim, 4 brace, 5 asleep
+  if(hasActorArt(p)){
     const engaged=['encounter','defEnc','aiEnc'].includes(G.state)&&(p===G.carrier||(G.enc&&G.enc.includes(p)));
-    // Drive the stroke cycle from distance travelled, not an unrelated clock.
-    // Preserve the existing six-frame art while the articulated rig is built.
-    const strokeClock=t*(1.6+spd*0.08);
-    const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(strokeClock)%2):Math.floor(t*1.6)%2;
-    const tgt=fr>=2&&fr<=3?clamp(Math.atan2(p.vy,Math.abs(p.vx)||0.01),-1.1,1.1):0;p.srot=(p.srot||0)+(tgt-(p.srot||0))*0.15;
-    ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';
-    // Distinct team-color backplate stays visible even when jersey mask is subtle.
-    ctx.fillStyle=p.team===0?'rgba(0,200,245,0.34)':'rgba(255,162,75,0.28)';
-    ctx.beginPath();ctx.ellipse(0,0,8,9,0,0,Math.PI*2);ctx.fill();
-    ctx.drawImage(swS,fr*128,0,128,128,-10.5,-10.5,21,21);ctx.restore();
+    const pose=asleep?'sleep':(p.stun>0?'hit':engaged?'brace':swim>0.35?'swim':'tread');
+    // stroke phase advances with distance travelled so strokes match speed
+    p.sph=(p.sph||0)+(G.dtLast||0.016)*(pose==='swim'?0.9+spd*0.055:0.55);
+    // lean into turns: track how fast the heading changes
+    const hd=Math.atan2(p.vy,p.vx);let dh=hd-(p.lastHd??hd);while(dh>Math.PI)dh-=2*Math.PI;while(dh<-Math.PI)dh+=2*Math.PI;p.lastHd=hd;p.lean=(p.lean||0)*0.9+clamp(dh*6,-0.5,0.5)*0.1*swim;
+    ctx.save();ctx.translate(x,y);ctx.fillStyle=alpha(tcol,0.22);ctx.beginPath();ctx.ellipse(0,0.5,8.5*dsc,9.5*dsc,0,0,7);ctx.fill();ctx.restore();
+    drawActor(p,x,y,ACTOR_FIELD*dsc,{pose,ph:p.sph,face:f,vx:p.vx,vy:p.vy,lean:p.lean,J});
   }else{
   ctx.save();ctx.translate(x,y);ctx.rotate(p.rot);
   {const x=0,y=0,stroke=swim>0.35;
@@ -1182,7 +1178,7 @@ function statusChips(p,x,y){
 function mini(p,x,y,w,right){
   avatar(p,right?x+w-9:x+9,y+11,8.5);const tx=right?x+w-20:x+20,al=right?'right':'left';
   txt(p.name,tx,y+5,6,'#ffffff',al,{sw:0.25});
-  const bx=right?x:x+20,bw=w-21;hpBar(bx,y+9,bw,p,3);spBar(bx,y+12.8,bw,p,2.2);txt(Math.round(p.hp)+' HP · '+Math.floor(p.sp)+' SP',right?x+1:x+w-1,y+18,4.1,'#cfe3ff',right?'left':'right',{stroke:false});
+  const bx=right?x+11:x+20,bw=w-31;hpBar(bx,y+9,bw,p,3);spBar(bx,y+12.8,bw,p,2.2);txt(Math.round(p.hp)+' HP · '+Math.floor(p.sp)+' SP',right?x+11:x+w-11,y+18,4.1,'#cfe3ff',right?'left':'right',{stroke:false});
   const ks=p.team===G.carrier?.team?['end','pas','sht']:['atk','blk','cat'];
   ks.forEach((k,i)=>{const v=Math.round(S(p,k)*hpF(p));const cx=right?x+w-20-(2-i)*21:x+20+i*21;txt(k.toUpperCase(),cx,y+23.5,4.2,'#8fa0d8','left',{stroke:false});txt(v,cx+10.5,y+23.5,5.4,v<p[k]?'#ff8a8a':'#ffffff','left',{sw:0.2});});
   const chips=['poison','sleep','weak','slow'].filter(k=>p.fx[k]>0);chips.forEach((k,i)=>{const cx=right?x+w-18-i*24:x+20+i*24;rrect(ctx,cx-1,y+26.5,22,5.5,2.75);ctx.fillStyle=FX[k].col;ctx.fill();txt(FX[k].name,cx+10,y+29.3,3.8,'#140f2e','center',{stroke:false});});
@@ -1198,7 +1194,7 @@ function versus(a,ds,y){
   mini(a,6,y+1,80,false);mini(ds[0],94,y+1,80,true);
   const ac=a.team===0?TEAMS.riptide.col:G.away.col,dc=ds[0].team===0?TEAMS.riptide.col:G.away.col;
   ctx.save();ctx.strokeStyle=ac;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(9,y+2);ctx.lineTo(65,y+2);ctx.stroke();ctx.strokeStyle=dc;ctx.beginPath();ctx.moveTo(115,y+32);ctx.lineTo(171,y+32);ctx.stroke();ctx.restore();
-  ellipse(90,y+14,10,10,'#071a31','#ffd24a',1);txt('VS',90,y+14,7,'#ffd24a');if(ds.length>1)txt('+'+(ds.length-1)+' DEF',90,y+26,4.6,'#ff8a8a','center',{stroke:false});
+  ellipse(90,y+13,8,8,'#071a31','#ffd24a',1);txt('VS',90,y+13,6,'#ffd24a');if(ds.length>1)txt('+'+(ds.length-1)+' DEF',90,y+26,4.6,'#ff8a8a','center',{stroke:false});
 }
 function card(p,y,extra){
   kitPanel(4,y,172,34,6);
@@ -1457,6 +1453,107 @@ function seqBall(c,n,t){
     return {x:last.x-k*26,y:last.y+Math.sin(k*Math.PI)*-14+k*10,i:stop,done:k>=1};}
   return {x:last.x,y:last.y,i:stop,done:true};
 }
+// =================== ACTORS ===================
+// One renderer for a player's full body everywhere (field, encounter VS, shot/pass scenes).
+// Uses the cut-out rig when a form has rig parts, else the approved 6-frame swimmer art,
+// else the old procedural body. Poses: tread swim brace sleep shoot pass block hit dive save.
+const ACTOR_FIELD=25,PLAYZ=1.18;// players drawn bigger and the camera sits closer during live play
+const RIGS={};// filled by loadRig()
+function rigFor(p){return RIGS[swimSlug(p)]||null;}
+// =================== CUT-OUT RIG ===================
+// A character drawn once in pieces (head, torso, pelvis, upper arm, forearm/fist, thigh, shin)
+// and animated by rotating the pieces at their joints. Config: art/rig/<slug>/rig.json.
+// Angles are in the body frame: 0 = forward, PI/2 = down (toward the feet), PI = back.
+const RIG_SLUGS=['human'],RIG_HEAD=1.3;// head drawn a bit big for a chunky cartoon read at small sizes
+function loadRig(slug){
+  fetch('art/rig/'+slug+'/rig.json').then(r=>r.ok?r.json():null).then(cfg=>{if(!cfg)return;
+    const R={cfg,img:{},tint:{},slug};let n=0,done=0;
+    for(const k in cfg.parts){n++;const im=new Image();im.onload=()=>{R.img[k]=im;if(++done===n)prepRig(R);};im.src='art/rig/'+slug+'/'+cfg.parts[k].file;}
+  }).catch(()=>{});
+}
+function prepRig(R){const P=R.cfg.parts;R.limb={};
+  for(const k of ['upper_arm','forearm','fist','thigh','shin']){const q=P[k];R.limb[k]={a:q.a,len:Math.hypot(q.b[0]-q.a[0],q.b[1]-q.a[1]),ang0:Math.atan2(q.b[1]-q.a[1],q.b[0]-q.a[0])};}
+  const t=P.torso;R.N=[t.neck[0]-t.hip[0],t.neck[1]-t.hip[1]];R.S=[t.shoulder[0]-t.hip[0],t.shoulder[1]-t.hip[1]];
+  const pl=P.pelvis;R.L=[pl.leg[0]-pl.waist[0],pl.leg[1]-pl.waist[1]];
+  R.C=[R.N[0]*0.5,(R.N[1]+R.L[1]+R.limb.thigh.len)*0.5];// body centre for placement
+  R.dark={};for(const k in R.img)R.dark[k]=shadePart(R.img[k],null,0.42);
+  RIGS[R.slug]=R;if(R.slug==='human')RIGS.human=R;
+}
+// copy of a part, optionally with the gray kit tinted to a team colour, optionally darkened (far-side limbs)
+function shadePart(im,J,dark){const c=document.createElement('canvas');c.width=im.width;c.height=im.height;const g=c.getContext('2d');g.drawImage(im,0,0);
+  if(J){const d=g.getImageData(0,0,c.width,c.height),a=d.data;const tc=hexRgb(shade(J,1.3));
+    for(let i=0;i<a.length;i+=4){if(a[i+3]<20)continue;const r=a[i],gg=a[i+1],b=a[i+2],mx=Math.max(r,gg,b),mn=Math.min(r,gg,b);
+      const sat=(mx-mn)/(mx||1);if(mx>70&&sat<0.24){const l=Math.min(1.25,(0.3*r+0.59*gg+0.11*b)/185),k=clamp((0.24-sat)/0.08,0,1);
+        a[i]=r+(Math.min(255,tc[0]*l)-r)*k;a[i+1]=gg+(Math.min(255,tc[1]*l)-gg)*k;a[i+2]=b+(Math.min(255,tc[2]*l)-b)*k;}}g.putImageData(d,0,0);}
+  if(dark){g.globalCompositeOperation='source-atop';g.fillStyle='rgba(8,14,40,'+dark+')';g.fillRect(0,0,c.width,c.height);}
+  return c;}
+function hexRgb(h){const r=/rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)/i.exec(h);if(r)return [+r[1],+r[2],+r[3]];const m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})/i.exec(h)||[0,'80','80','80'];return [parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)];}
+function rigPart(R,k,J,far){if(!J||!R.cfg.tint.includes(k))return far?R.dark[k]:R.img[k];const key=k+J+(far?'d':'');
+  return R.tint[key]||(R.tint[key]=shadePart(R.img[k],J,far?0.42:0));}
+
+const TAU=Math.PI*2,lerpA=(a,b,k)=>{let d=b-a;while(d>Math.PI)d-=TAU;while(d<-Math.PI)d+=TAU;return a+d*k;};
+// Target joint angles for a pose. ph = stroke phase in cycles, w = wind-up 0..1 for shots/passes.
+function rigPose(o){const pose=o.pose||'tread',ph=o.ph||0,s=Math.sin(ph*TAU),w=o.wind??1;let P;
+  if(pose==='swim'){const u=-Math.PI/2+ph*TAU,u2=u+Math.PI,rec=x=>{const m=((x%TAU)+TAU)%TAU;return m>Math.PI/2&&m<1.5*Math.PI?Math.sin((m-Math.PI/2))*-1.5:-0.25;};
+    const k=Math.sin(ph*TAU*2),k2=Math.sin(ph*TAU*2-1.2);
+    P={body:Math.PI/2+clamp(Math.atan2(o.vy||0,Math.abs(o.vx||0.01))*0.6,-0.6,0.6)+(o.lean||0),head:-0.6+(Math.floor(ph)%2?0.18*Math.max(0,Math.sin(ph*TAU)):0),
+      ua:u,ea:rec(u),ua2:u2,ea2:rec(u2),ta:Math.PI/2+0.28*k,ka:0.35+0.3*k2,ta2:Math.PI/2-0.28*k,ka2:0.35-0.3*k2,sx:1+0.035*Math.sin(ph*TAU*2),fist:false};}
+  else if(pose==='tread'){P={body:0.12+(o.lean||0)*0.6,head:0.05*s,ua:0.55+0.4*s,ea:-0.6-0.3*s,ua2:0.8-0.4*s,ea2:-0.6+0.3*s,
+      ta:Math.PI/2-0.55+0.25*s,ka:1.1+0.5*Math.sin(ph*TAU+1),ta2:Math.PI/2-0.55-0.25*s,ka2:1.1-0.5*Math.sin(ph*TAU+1),sx:1,fist:false};}
+  else if(pose==='brace'||pose==='block'){const j=Math.sin(ph*TAU*3)*0.05;P={body:0.32+j,head:-0.15,ua:-0.15+j,ea:-0.95,ua2:0.05-j,ea2:-1.05,ta:Math.PI/2-0.75,ka:1.35,ta2:Math.PI/2-0.15,ka2:0.65,sx:1.03,fist:true};}
+  else if(pose==='shoot'||pose==='pass'){const big=pose==='shoot'?1:0.65;
+    if(w<0.55){const k=ease(w/0.55);P={body:0.1-0.4*k*big,head:-0.1,ua:Math.PI/2+(Math.PI*0.95)*k*big,ea:-1.6*k,ua2:0.6-0.5*k,ea2:-0.7,ta:Math.PI/2-0.5*k,ka:0.4+0.9*k,ta2:Math.PI/2+0.1,ka2:0.5,sx:1-0.05*k,fist:pose==='shoot'};}
+    else{const k=ease((w-0.55)/0.45);P={body:-0.3*big+0.85*k,head:-0.2,ua:Math.PI/2+Math.PI*0.95*big-(Math.PI*0.95*big+1.95)*k,ea:-1.6+1.5*k,ua2:0.1+0.8*k,ea2:-0.5,ta:Math.PI/2-0.5+0.95*k,ka:1.3-1.0*k,ta2:Math.PI/2+0.1-0.4*k,ka2:0.5+0.5*k,sx:1+0.08*k,fist:pose==='shoot'};}}
+  else if(pose==='hit'){P={body:-0.6,head:0.35,ua:-1.5,ea:-0.3,ua2:-2.0,ea2:-0.4,ta:Math.PI/2-0.65,ka:0.4,ta2:Math.PI/2-0.25,ka2:0.8,sx:0.95,fist:false};}
+  else if(pose==='dive'){P={body:-1.25,head:-0.1,ua:-Math.PI/2-0.15,ea:0,ua2:-Math.PI/2+0.1,ea2:-0.1,ta:Math.PI/2+0.1,ka:0.15,ta2:Math.PI/2-0.15,ka2:0.4,sx:1.08,fist:false};}
+  else if(pose==='save'){P={body:0.15,head:-0.2,ua:-1.05,ea:-0.15,ua2:-0.75,ea2:-0.2,ta:Math.PI/2-0.6,ka:1.1,ta2:Math.PI/2-0.1,ka2:0.5,sx:1.04,fist:false};}
+  else{const b=Math.sin(ph*TAU*0.4);P={body:0.4+0.06*b,head:0.35,ua:Math.PI/2+0.25,ea:-0.15,ua2:Math.PI/2+0.4,ea2:-0.1,ta:Math.PI/2+0.1,ka:0.35,ta2:Math.PI/2+0.25,ka2:0.25,sx:1,fist:false,sleep:true};}
+  return P;}
+const RIG_KEYS=['body','head','ua','ea','ua2','ea2','ta','ka','ta2','ka2','sx'];
+function drawRig(R,p,x,y,size,o){
+  const T=rigPose(o),key='_rig'+(o.ctxKey||'');let C=p[key];const now=G.time;
+  if(!C||now-C.t>0.5||o.snap){C=p[key]=Object.assign({},T);}
+  const k=Math.min(1,(o.dt??(G.dtLast||0.016))*14);
+  for(const q of RIG_KEYS)C[q]=q==='sx'?C[q]+(T[q]-C[q])*k:lerpA(C[q],T[q],q==='ua'||q==='ua2'?Math.min(1,k*1.6):k);
+  C.t=now;C.fist=T.fist;C.sleep=T.sleep;
+  const J=o.J,P=R.cfg.parts,sc=size*0.82/R.cfg.height,f=o.face||1;
+  ctx.save();ctx.translate(x,y);ctx.scale(f*sc,sc);ctx.rotate(C.body);ctx.translate(-R.C[0],-R.C[1]);ctx.imageSmoothingQuality='high';
+  const limb=(name,px,py,ang,far)=>{const L=R.limb[name],im=rigPart(R,name,J,far);ctx.save();ctx.translate(px,py);ctx.rotate(ang-L.ang0);ctx.drawImage(im,-L.a[0],-L.a[1]);ctx.restore();return [px+Math.cos(ang)*L.len,py+Math.sin(ang)*L.len];};
+  const arm=(ua,ea,far)=>{const e=limb('upper_arm',R.S[0],R.S[1],ua,far);limb(C.fist?'fist':'forearm',e[0],e[1],ua+ea,far);};
+  const leg=(ta,ka,far)=>{const kn=limb('thigh',R.L[0],R.L[1],ta,far);limb('shin',kn[0],kn[1],ta+ka,far);};
+  arm(C.ua2,C.ea2,true);leg(C.ta2,C.ka2,true);
+  const pl=P.pelvis;ctx.drawImage(rigPart(R,'pelvis',J,false),-pl.waist[0],-pl.waist[1]);
+  const tr=P.torso;ctx.save();ctx.scale(C.sx,2-C.sx);ctx.drawImage(rigPart(R,'torso',J,false),-tr.hip[0],-tr.hip[1]);ctx.restore();
+  leg(C.ta,C.ka,false);
+  const hk=C.sleep?'head_sleep':'head',hd=P[hk];ctx.save();ctx.translate(R.N[0],R.N[1]);ctx.rotate(C.head);ctx.scale(RIG_HEAD,RIG_HEAD);ctx.drawImage(R.img[hk],-hd.neck[0],-hd.neck[1]);ctx.restore();
+  arm(C.ua,C.ea,false);
+  ctx.restore();return true;}
+RIG_SLUGS.forEach(loadRig);
+
+function hasActorArt(p){return !!(rigFor(p)||swimmerFor(p,'#cccccc'));}
+function drawActor(p,x,y,size,o){
+  const td=p.team===0?TEAMS.riptide:G.away,J=o.J||(p.isGK?td.gk:td.col);
+  const rig=rigFor(p);if(rig&&drawRig(rig,p,x,y,size,Object.assign({J},o)))return;
+  const sw=swimmerFor(p,J);if(sw){drawSpriteActor(sw,x,y,size,o);return;}
+  drawActionActor(p,x,y,size*0.5,o.pose==='tread'?'swim':o.pose,o.ph||0,o.face||1);
+}
+// Approved 6-frame strip (0-1 tread, 2-3 swim, 4 brace, 5 asleep) brought to life with
+// squash/stretch, bobbing, leaning and pose-specific motion.
+function drawSpriteActor(sh,x,y,size,o){
+  const ph=o.ph||0,f=o.face||1,pose=o.pose||'tread',cyc=ph%1,wave=Math.sin(ph*Math.PI*2);
+  let fr=0,rot=0,sx=1,sy=1,dx=0,dy=0;
+  if(pose==='tread'){fr=cyc<0.5?0:1;dy=Math.sin(ph*Math.PI*2)*size*0.025;sy=1+wave*0.03;sx=1-wave*0.02;rot=o.lean||0;}
+  else if(pose==='swim'){fr=cyc<0.5?2:3;const v=Math.hypot(o.vx||0,o.vy||0)||1;rot=clamp(Math.atan2(o.vy||0,Math.abs(o.vx||0.01)),-1.1,1.1)+(o.lean||0);
+    const pulse=Math.sin(ph*Math.PI*4);sx=1+0.07*pulse;sy=1-0.05*pulse;dy=Math.sin(ph*Math.PI*2)*size*0.015;}
+  else if(pose==='brace'||pose==='block'){fr=4;const b=Math.sin(ph*Math.PI*6);sx=1.04+0.02*b;sy=0.95-0.02*b;}
+  else if(pose==='sleep'){fr=5;rot=Math.sin(ph*Math.PI*0.8)*0.12;dy=Math.sin(ph*Math.PI*0.8)*size*0.03;}
+  else if(pose==='shoot'||pose==='pass'){const w=o.wind??0;fr=w<0.5?4:2;sx=w<0.5?0.9:1.18;sy=w<0.5?1.08:0.88;dx=w<0.5?-size*0.08:size*0.12;rot=w<0.5?0.15:-0.1;}
+  else if(pose==='hit'){fr=4;rot=-0.55;dx=-size*0.1;sx=0.92;sy=1.06;}
+  else if(pose==='dive'){fr=3;rot=-0.95;sx=1.12;sy=0.92;}
+  else if(pose==='save'){fr=2;rot=-0.6;sx=1.1;sy=0.95;dx=-size*0.06;}
+  ctx.save();ctx.translate(x+dx*f,y+dy);ctx.scale(f,1);ctx.rotate(rot);ctx.scale(sx,sy);ctx.imageSmoothingQuality='high';
+  ctx.drawImage(sh,fr*128,0,128,128,-size/2,-size/2,size,size);ctx.restore();
+}
 // Full-body procedural action actor for match cinematics. Uses player species,
 // jersey and skin, never a static portrait. All poses share a common skeleton.
 function drawActionActor(p,x,y,size,pose,phase=0,face=1){
@@ -1489,7 +1586,7 @@ function drawSeq(c,t,out){
   ctx.strokeStyle='rgba(255,255,255,0.12)';ctx.lineWidth=14;ctx.lineCap='round';ctx.beginPath();ctx.moveTo(20,124);n.forEach(d=>ctx.lineTo(d.x,d.y));if(c.kind==='shot')ctx.lineTo(176,122);ctx.stroke();
   if(c.kind==='shot'){rrect(ctx,166,104,12,36,3);ctx.fillStyle='rgba(255,255,255,0.08)';ctx.fill();ctx.strokeStyle=alpha(mine?G.away.col:TEAMS.riptide.col,0.8);ctx.lineWidth=1.2;ctx.stroke();for(let i=0;i<4;i++){ctx.beginPath();ctx.moveTo(167,108+i*8);ctx.lineTo(177,108+i*8);ctx.strokeStyle='rgba(255,255,255,0.2)';ctx.stroke();}}
   // shooter
-  ctx.save();ctx.translate(24,124);const ss=t<SEQ_T0?1+0.12*Math.sin(t*20):1;ctx.scale(ss,ss);ellipse(0,0,15,15,alpha(mine?TEAMS.riptide.col:G.away.col,0.35));drawActionActor(A,0,-2,12,t<SEQ_T0?(c.kind==='shot'?'shoot':'pass'):'swim',t*2,1);ctx.restore();
+  ctx.save();ctx.translate(24,124);const ss=t<SEQ_T0?1+0.12*Math.sin(t*20):1;ctx.scale(ss,ss);ellipse(0,0,15,15,alpha(mine?TEAMS.riptide.col:G.away.col,0.35));drawActor(A,0,-2,32,{ctxKey:'cut',pose:t<SEQ_T0?(c.kind==='shot'?'shoot':'pass'):'swim',wind:clamp(t/SEQ_T0,0,1),ph:t*1.4,face:1});ctx.restore();
   txt(A.name,24,145,5.2,'#ffffff','center',{sw:0.2});
   // nodes
   n.forEach((d,i)=>{const hit=t>=d.at&&i<=stop,skip=i>stop,P=d.p,dc=P.team===0?TEAMS.riptide.col:G.away.col;
@@ -1497,7 +1594,7 @@ function drawSeq(c,t,out){
     // keeper showdown: keeper swells as the ball slows, then lunges at it (dives the wrong way on a goal)
     let gx=0,gy=0,gs=1,gr=0;if(d.gk&&!skip){const pre=clamp((t-d.a)/(d.at-d.a),0,1);gs=1+0.25*ease(pre);if(t>=d.at-0.12){const l=ease(clamp((t-d.at+0.12)/0.2,0,1));if(c.ok){gx=l*4;gy=l*12;gr=l*0.6;}else{gx=-l*7;gy=-l*3;gr=-l*0.3;}}}
     ctx.save();ctx.globalAlpha=out*(skip?0.35:1);ctx.translate(d.x+wob+gx,d.y+gy);ctx.rotate(gr);ctx.scale(gs,gs);const r=d.gk?13:11;
-    ellipse(0,0,r+2,r+2,alpha(dc,0.35));const pose=d.gk?(hit?(c.ok?'dive':'save'):'block'):d.rcv?(hit?'pass':'swim'):hit?(d.dodged?'hit':'block'):'swim';drawActionActor(P,0,-2,r,pose,t*2,-1);ctx.restore();
+    ellipse(0,0,r+2,r+2,alpha(dc,0.35));const pose=d.gk?(hit?(c.ok?'dive':'save'):'brace'):d.rcv?(hit?'brace':'tread'):hit?(d.dodged?'hit':'block'):'tread';drawActor(P,0,-1,r*2.7,{ctxKey:'cut',pose,ph:t*1.1+i*0.3,face:-1});ctx.restore();
     ctx.globalAlpha=out*(skip?0.35:1);
     const lab=d.rcv?'CATCH':d.gk?(c.asleep?'ASLEEP':'CAT'):'BLK';txt(P.name,d.x,d.y+r_(d)+7,4.6,'#ffffff','center',{sw:0.18});
     if(!hit)txt(lab,d.x,d.y-r_(d)-5,4.6,'#cfe3ff','center',{stroke:false});
@@ -1563,10 +1660,10 @@ function drawCut(){
     const A=c.a,D=c.d[0],ac=A.team===0?TEAMS.riptide.col:G.away.col,dc=D.team===0?TEAMS.riptide.col:G.away.col;
     ctx.save();ctx.translate(-(1-e)*120,0);ctx.beginPath();ctx.moveTo(0,62);ctx.lineTo(100,62);ctx.lineTo(80,196);ctx.lineTo(0,196);ctx.closePath();
     let gr=ctx.createLinearGradient(0,62,0,196);gr.addColorStop(0,shade(ac,1.2));gr.addColorStop(1,shade(ac,0.5));ctx.fillStyle=gr;ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=OL;ctx.stroke();
-    drawCrest(A.team===0?'riptide':G.awayKey,44,112,74,0.22);drawActionActor(A,44,112+Math.sin(t*3)*1.2,24,'swim',t,1);txt(A.name,44,146,8.5,'#ffffff');hpBar(20,152,48,A,3.5);spBar(20,156.6,48,A,2.4);txt('END '+Math.round(S(A,'end')*hpF(A))+' · PAS '+Math.round(S(A,'pas')*hpF(A))+' · SHT '+Math.round(S(A,'sht')*hpF(A)),44,163,4.8,'#ffe066');statusChipsAt(A,44,174);ctx.restore();
+    drawCrest(A.team===0?'riptide':G.awayKey,44,112,74,0.22);drawActor(A,44,114,70,{ctxKey:'vs',pose:'swim',ph:t*1.3,face:1,vx:1,vy:0});txt(A.name,44,146,8.5,'#ffffff');hpBar(20,152,48,A,3.5);spBar(20,156.6,48,A,2.4);txt('END '+Math.round(S(A,'end')*hpF(A))+' · PAS '+Math.round(S(A,'pas')*hpF(A))+' · SHT '+Math.round(S(A,'sht')*hpF(A)),44,163,4.8,'#ffe066');statusChipsAt(A,44,174);ctx.restore();
     ctx.save();ctx.translate((1-e)*120,0);ctx.beginPath();ctx.moveTo(W,62);ctx.lineTo(100,62);ctx.lineTo(80,196);ctx.lineTo(W,196);ctx.closePath();
     gr=ctx.createLinearGradient(0,62,0,196);gr.addColorStop(0,shade(dc,1.2));gr.addColorStop(1,shade(dc,0.5));ctx.fillStyle=gr;ctx.fill();ctx.lineWidth=1.5;ctx.strokeStyle=OL;ctx.stroke();
-    drawCrest(D.team===0?'riptide':G.awayKey,136,112,74,0.22);drawActionActor(D,136,112+Math.sin(t*3+1.6)*1.2,24,'block',t,-1);txt(D.name,136,146,8.5,'#ffffff');hpBar(112,152,48,D,3.5);spBar(112,156.6,48,D,2.4);txt('ATK '+Math.round(S(D,'atk')*hpF(D))+' BLK '+Math.round(S(D,'blk')*hpF(D))+(c.d.length>1?' (+'+(c.d.length-1)+' more)':'')+' · HP '+Math.round(D.hp),136,163,4.8,'#ff8a8a');statusChipsAt(D,136,174);ctx.restore();
+    drawCrest(D.team===0?'riptide':G.awayKey,136,112,74,0.22);drawActor(D,136,114,70,{ctxKey:'vs',pose:'brace',ph:t,face:-1});txt(D.name,136,146,8.5,'#ffffff');hpBar(112,152,48,D,3.5);spBar(112,156.6,48,D,2.4);txt('ATK '+Math.round(S(D,'atk')*hpF(D))+' BLK '+Math.round(S(D,'blk')*hpF(D))+(c.d.length>1?' (+'+(c.d.length-1)+' more)':'')+' · HP '+Math.round(D.hp),136,163,4.8,'#ff8a8a');statusChipsAt(D,136,174);ctx.restore();
     // VS centerpiece: impact flash, spinning energy burst, stamped emblem
     const s=t<0.28?0.4+e*0.8:1.2-Math.min(0.2,(t-0.28));
     if(t>0.2&&t<0.55){const k=(t-0.2)/0.35;ctx.globalAlpha=out*(1-k);ellipse(90,112,10+k*70,10+k*70,'#ffffff');ctx.globalAlpha=out;}
@@ -1654,7 +1751,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('SPHERE LEAGUE · TECH-FANTASY TEST BUILD',CX,H-14,4.6,'#92a5c7','center',{stroke:false});
+  txt('PROTOTYPE v0.21',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}
@@ -1965,7 +2062,7 @@ function loop(now){
   requestAnimationFrame(loop);
 }
 requestAnimationFrame(loop);
-window.__SL={startAiEnc,G,setSpeed:s=>SPEED=s,setupMatch,update,kick:t=>kickoff(t),SAVE,MOVES,FX,buttons:()=>buttons,simShot,simPass,simBreak,odds,doBreak,doPass,doShot,landFlight,applyFx,engagedOf,aiTackleFor,defStopOdds,passTarget,passOddsMap,encounterCheck,givePossession,teamOf,gkOf,persist,render};
+window.__SL={drawActor,RIGS,rigPose,startAiEnc,G,setSpeed:s=>SPEED=s,setupMatch,update,kick:t=>kickoff(t),SAVE,MOVES,FX,buttons:()=>buttons,simShot,simPass,simBreak,odds,doBreak,doPass,doShot,landFlight,applyFx,engagedOf,aiTackleFor,defStopOdds,passTarget,passOddsMap,encounterCheck,givePossession,teamOf,gkOf,persist,render};
 </script>
 <button id="upd">New version available — tap to update</button>
 <script>

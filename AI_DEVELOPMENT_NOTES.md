@@ -113,3 +113,10 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - **Crests**: `drawCrest(teamKey,...)`; scoreboard, standings, title, VS.
 - **Swimmers**: `art/swimmer_<slug>.png` (6 frames: tread, tread, swim, swim, brace, asleep) + `_jersey.png` mask, listed in `SWIM_SLUGS`. Forms not listed fall back to the drawn swimmer. Synthari use an empty mask (their metal body is gray, so tinting would turn the whole body team-colored).
 - Source files: Drive / Sphere League / 03 - Concepts In Review.
+
+## v0.21 (2026-11-20): actors + cut-out rig pilot
+- `drawActor(p,x,y,size,{pose,ph,face,...})` is the single full-body renderer for the field, Encounter VS and shot/pass scenes. Order: cut-out rig if the form has one, else the approved 6-frame swimmer strip (`drawSpriteActor`, with squash/stretch, bob, lean, pose motion), else the old procedural body.
+- Poses: tread, swim, brace, block, shoot, pass (use `wind` 0..1), hit, dive, save, sleep.
+- **Cut-out rig** (`drawRig`, `rigPose`): parts + joint pivots in `art/rig/<slug>/rig.json`; angles in body frame (0 forward, PI/2 toward feet). Gray kit on torso/pelvis is tinted to the team color; far-side limbs are darkened copies. Joints ease toward target poses each frame (stored per player per context key).
+- Pilot: `human` (Human male) only, cut from ChatGPT's parts sheet (Drive / 05 - Rig Parts / human_m / original_parts_sheet_01.png) by `work/cut_parts.py` style tooling. To add a form: get a parts sheet with separated pieces, cut + measure pivots, drop into `art/rig/<slug>/`, add slug to `RIG_SLUGS`.
+- Team markers keep ChatGPT's ring (home) / dashed bar (away) shapes but use each team's own color. Players drawn larger (`ACTOR_FIELD`), camera closer in live play (`PLAYZ`), slight depth scale by field height.

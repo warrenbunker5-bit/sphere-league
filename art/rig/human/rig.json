@@ -1,0 +1,104 @@
+{
+ "height": 999,
+ "tint": [
+  "torso",
+  "pelvis"
+ ],
+ "parts": {
+  "upper_arm": {
+   "file": "upper_arm.png",
+   "a": [
+    63,
+    70
+   ],
+   "b": [
+    255,
+    73
+   ]
+  },
+  "forearm": {
+   "file": "forearm.png",
+   "a": [
+    54,
+    54
+   ],
+   "b": [
+    218,
+    55
+   ]
+  },
+  "fist": {
+   "file": "fist.png",
+   "a": [
+    51,
+    56
+   ],
+   "b": [
+    212,
+    58
+   ]
+  },
+  "thigh": {
+   "file": "thigh.png",
+   "a": [
+    67,
+    72
+   ],
+   "b": [
+    228,
+    80
+   ]
+  },
+  "shin": {
+   "file": "shin.png",
+   "a": [
+    59,
+    63
+   ],
+   "b": [
+    236,
+    67
+   ]
+  },
+  "torso": {
+   "file": "torso.png",
+   "neck": [
+    98,
+    27
+   ],
+   "shoulder": [
+    68,
+    131
+   ],
+   "hip": [
+    133,
+    373
+   ]
+  },
+  "pelvis": {
+   "file": "pelvis.png",
+   "waist": [
+    123,
+    22
+   ],
+   "leg": [
+    123,
+    163
+   ]
+  },
+  "head": {
+   "file": "head.png",
+   "neck": [
+    174,
+    242
+   ]
+  },
+  "head_sleep": {
+   "file": "head_sleep.png",
+   "neck": [
+    174,
+    236
+   ]
+  }
+ }
+}

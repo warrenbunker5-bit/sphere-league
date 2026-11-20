@@ -132,3 +132,11 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - `aiBestShot`: the AI compares the real odds of a basic shot vs. each special and pays a small value cost for a special, so it doesn't burn them on easy goals.
 - Encounters: no distance gate; shots above the bar are weighted up.
 - 720-match sim vs v0.24: Anglers losses 43%->17%, Undertow 50%->20%. Boulder Breakers is still ~80% draws (very low scoring both ways) - matchup issue, not thresholds.
+
+## v0.26 open 1-on-1 scoring (Warren + ChatGPT)
+- Warren: blockers keep a big impact (beat the blocker is the core); open shooter-vs-keeper should be better, and proximity matters (penalty-like ~75-80%).
+- Refit to ChatGPT's open-shot table vs CAT18: SHT22 ~91% point blank / ~76% at 40 / ~35% at 75 / ~9% at 110 / ~0.5% half court; elite SHT40 99/96/80/51/13%.
+- `SHOT_FADE` now starts at 40u; `SHOT_PROX` close-range bonus applies only to open shots (no defender touched). Keeper gv=cat*1.096, logistic scale 7.33. First engaged blocker 0.75->0.9, others 0.45->0.5, so contested shots stay where they were (SHT22 close ~12%).
+- `gkPosBonus`: +5/12/20% for a keeper 10/20/35+u off the shot line, +25% if stranded. Stepping out on the line doesn't count. Fades to 0 at half court; not used vs sleeping keepers.
+- AI open-shot bar 35%->25%.
+- 720-match sim, total goals: Currents 2.7->3.5, Divers 2.8->3.6, Anglers 1.5->3.1, Undertow 1.0->2.3, Breakers 0.2->1.4.

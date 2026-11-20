@@ -310,21 +310,30 @@ const gkWall=gk=>gk.moves.includes('wall')&&gk.sp>=spCost(gk,'wall');
 //  power fades with distance; defenders on the shooter and in the lane soak power as before;
 //  then an ON-TARGET roll (worse from range, better for good shooters) and, if the keeper is awake,
 //  a smooth shooter-vs-keeper contest. A sleeping keeper only stops it with a reflex save.
-const SHOT_FADE=d=>0.034*Math.pow(Math.max(0,d-35),1.426);
+const SHOT_FADE=d=>0.0121*Math.pow(Math.max(0,d-40),1.696);
+// v0.26: close shots favor the shooter (keeper contest only, so blockers stay strong). Fitted to ChatGPT's open 1-on-1 table: SHT22 ~90% point blank, ~75% penalty range.
+const SHOT_PROX=d=>0.45*Math.max(0,52.4-d);
 function shotAccuracy(sht,d,m){const reach=136.5*Math.pow(Math.max(8,sht)/22,0.82)*(m&&m.special==='curve'?1.35:m&&m.special==='multi'?1.6:1);
   return clamp(1-Math.pow(Math.max(0,d-35)/reach,1.317),0.02,1);}
+// v0.26 keeper positioning (ChatGPT's table): bonus to the shooter when the keeper is off the line
+// from shooter to goal. Stepping forward along that line to cut the angle doesn't count. Fades to 0 by half court.
+function gkPosBonus(gk,c,g,d){const ix=g.x+(c.x-g.x)/(d||1)*6,iy=g.y+(c.y-g.y)/(d||1)*6;// ideal: 6u out, on the shot line
+  const vx=c.x-g.x,vy=c.y-g.y,L=d||1,t=((gk.x-g.x)*vx+(gk.y-g.y)*vy)/L;// t = how far out along the line
+  const perp=Math.abs((gk.x-g.x)*vy-(gk.y-g.y)*vx)/L,off=t<0||t>L-4?dist(gk,{x:ix,y:iy}):perp;
+  const b=t>L-4||off>60?0.25:off>=35?0.20:off>=20?0.12:off>=10?0.05:0;
+  return b*clamp((145-d)/35,0,1);}
 function simShot(c,engaged,mv){
   const m=mv?MOVES[mv]:null,g=attackGoal(c.team),d=dist(c,g),sht=S(c,'sht')+powOf(c,mv);
   const raw=sht*rnd(0.82,1.25)*hpF(c),dl=SHOT_FADE(d)*(m&&m.special==='curve'?0.5:m&&m.special==='multi'?0.3:1);let s=raw-dl;const first=s,touched=[],steps=[];
   const sb=m?(m.bypass||0):0;let ei=0;
   const hit=(dd,v)=>{touched.push(dd);s-=v;steps.push({p:dd,v});return s<=0;};
-  for(const dd of engaged){if(sb&&Math.random()<sb){steps.push({p:dd,v:0,dodged:true});continue;}if(hit(dd,S(dd,'blk')*rnd(0.85,1.15)*(ei++?0.45:0.75)*(m&&m.special==='multi'?0.5:1)*hpF(dd)))return {ok:false,by:dd,first,raw,dl,blocked:true,touched,steps};}
+  for(const dd of engaged){if(sb&&Math.random()<sb){steps.push({p:dd,v:0,dodged:true});continue;}if(hit(dd,S(dd,'blk')*rnd(0.85,1.15)*(ei++?0.5:0.9)*(m&&m.special==='multi'?0.5:1)*hpF(dd)))return {ok:false,by:dd,first,raw,dl,blocked:true,touched,steps};}
   if(!(m&&m.special==='curve'))for(const k of lineBlockers(c,g,c.team,engaged,6))if(hit(k.o,S(k.o,'blk')*rnd(0.85,1.15)*0.32*hpF(k.o)))return {ok:false,by:k.o,first,raw,dl,blocked:true,touched,steps};
   const gk=gkOf(1-c.team),acc=shotAccuracy(sht,d,m);
   if(Math.random()>acc)return {ok:false,by:gk,first,raw,dl,s:Math.max(0,s),gv:0,touched,steps,wide:true,acc};
   if(isOut(gk)){const saved=Math.random()<Math.min(0.06,0.02+S(gk,'cat')/1000);if(saved)touched.push(gk);return {ok:!saved,by:gk,first,raw,dl,s:Math.max(0,s),gv:saved?s+1:0,touched,steps,asleep:true,reflex:saved,acc};}
-  const wall=gkWall(gk),cat=S(gk,'cat')+(wall?powOf(gk,'wall'):0);const gv=cat*1.173*hpF(gk);
-  const ok=Math.random()<1/(1+Math.exp(-(s-gv)/5.91));
+  const wall=gkWall(gk),cat=S(gk,'cat')+(wall?powOf(gk,'wall'):0);const gv=cat*1.096*hpF(gk);
+  const pos=gkPosBonus(gk,c,g,d),ok=Math.random()<Math.min(0.99,1/(1+Math.exp(-(s+(steps.length?0:SHOT_PROX(d))-gv)/7.33))+pos);
   if(!ok)touched.push(gk);
   return {ok,by:gk,first,raw,dl,s:Math.max(0,s),gv,touched,steps,wall,acc};
 }
@@ -641,7 +650,7 @@ function execChoice(c,ch,en,tk){if(ch.k==='break')doBreak(c,en,ch.mv,tk);else if
 // AI shooting (v0.25, ChatGPT's thresholds): judge real scoring odds, not distance.
 // Min odds worth shooting at: awake 35% (20% if pressed), sleeping keeper 25% (10% late), any real chance under 3s of shot clock.
 function aiShotBar(c,press){const gk=gkOf(1-c.team),asleep=isOut(gk),pc=G.poss==null?99:G.poss;
-  if(pc<3)return 0.04;if(asleep)return pc<5?0.10:0.25;if(pc<6)return 0.12;return press<30?0.20:0.35;}
+  if(pc<3)return 0.04;if(asleep)return pc<5?0.10:0.25;if(pc<6)return 0.12;return press<30?0.20:0.25;}
 // Best shot by odds; a special costs a little value so it isn't burned on an easy goal.
 function aiBestShot(c,engaged,n=30){let best=null;
   for(const mv of [null,...movesOfType(c,'shot').filter(id=>canUse(c,id))]){const p=odds(()=>simShot(c,engaged,mv),n);const v=p-(mv?0.08:0)+(mv&&MOVES[mv].fx?0.03:0);if(!best||v>best.v)best={mv,p,v};}
@@ -1795,7 +1804,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.25',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.26',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen

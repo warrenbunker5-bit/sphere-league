@@ -12,7 +12,7 @@ function check(name,cond,detail){results.push({name,pass:!!cond,detail:detail||'
   try{localStorage.removeItem('sphereLeague.v1');}catch(e){}
   const f=document.createElement('iframe');f.src='../index.html';document.body.appendChild(f);
   await new Promise(r=>f.onload=r);await new Promise(r=>setTimeout(r,300));
-  const W=f.contentWindow,SL=W.__SL,G=SL.G;SL.setSpeed(0);
+  const W=f.contentWindow,SL=W.__SL,G=SL.G;SL.setSpeed(0);W.__FX_ALWAYS=true;// statuses now roll per touch; these cases check WHO is affected, so force the roll
   W.localStorage.setItem=()=>{};// never write test state into the save
   const realRandom=W.Math.random;
   function fresh(team){
@@ -75,7 +75,7 @@ function check(name,cond,detail){results.push({name,pass:!!cond,detail:detail||'
   const shotCase=(name,setup,expect)=>{const {home,away}=fresh();const c=byPos(home,'LF');at(c,90,60);const gk=SL.gkOf(1);at(gk,90,8);const bl=byPos(away,'LD');
     c.moves.push('toxic');G.carrier=c;const en=setup(c,gk,bl);const s0=G.score[0];SL.doShot(c,en,'toxic');SL.landFlight();check(name,expect(c,gk,bl,G.score[0]>s0),'keeper poison='+gk.fx.poison+' blocker poison='+bl.fx.poison+' goal='+(G.score[0]>s0));};
   shotCase('GOAL with Toxic Shot: keeper NOT poisoned',(c,gk)=>{c.sht=500;gk.cat=1;return [];},(c,gk,bl,goal)=>goal&&!(gk.fx.poison>0));
-  shotCase('SAVE of Toxic Shot: keeper IS poisoned (owner exception)',(c,gk)=>{c.sht=1;gk.cat=500;return [];},(c,gk,bl,goal)=>!goal&&gk.fx.poison>0);
+  shotCase('SAVE of Toxic Shot: keeper IS poisoned (owner exception)',(c,gk)=>{c.sht=30;gk.cat=500;return [];},(c,gk,bl,goal)=>!goal&&gk.fx.poison>0);
   shotCase('BLOCK of Toxic Shot: blocker NOT poisoned',(c,gk,bl)=>{c.sht=30;bl.blk=500;at(bl,94,60);return [bl];},(c,gk,bl,goal)=>!goal&&!(bl.fx.poison>0)&&!(gk.fx.poison>0));
   shotCase('Toxic Shot gets PAST a blocker and scores: blocker poisoned, keeper not',(c,gk,bl)=>{c.sht=500;gk.cat=1;bl.blk=1;at(bl,94,60);return [bl];},(c,gk,bl,goal)=>goal&&bl.fx.poison>0&&!(gk.fx.poison>0));
 

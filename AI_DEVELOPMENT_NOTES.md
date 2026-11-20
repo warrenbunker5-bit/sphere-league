@@ -120,3 +120,9 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - **Cut-out rig** (`drawRig`, `rigPose`): parts + joint pivots in `art/rig/<slug>/rig.json`; angles in body frame (0 forward, PI/2 toward feet). Gray kit on torso/pelvis is tinted to the team color; far-side limbs are darkened copies. Joints ease toward target poses each frame (stored per player per context key).
 - Pilot: `human` (Human male) only, cut from ChatGPT's parts sheet (Drive / 05 - Rig Parts / human_m / original_parts_sheet_01.png) by `work/cut_parts.py` style tooling. To add a form: get a parts sheet with separated pieces, cut + measure pivots, drop into `art/rig/<slug>/`, add slug to `RIG_SLUGS`.
 - Team markers keep ChatGPT's ring (home) / dashed bar (away) shapes but use each team's own color. Players drawn larger (`ACTOR_FIELD`), camera closer in live play (`PLAYZ`), slight depth scale by field height.
+
+## v0.24 balance rules (Warren-approved)
+- XP: halftime XP still banks, but a pre-match save backup (`sphereLeague.v1.prematch`) is restored if the match is quit or the app is closed/reloaded mid-match. All XP from an unfinished match is lost; settings are kept.
+- Exhibitions: none in the offseason; 2 XP-earning exhibitions per season week (`EX_XP_PER_WEEK`, tracked in `SAVE.exXp`). Extra exhibitions are practice only.
+- Statuses roll per touch (`FX_CHANCE` by move rank; sleep on keepers is lower). Only sleep stuns. Tests force the roll with `window.__FX_ALWAYS`.
+- Shots: any range under 260. `shotAccuracy` (wide roll) + `SHOT_FADE` (power loss with distance) + logistic keeper contest. Sleeping keepers get a 2-6% reflex save. Fitted to ChatGPT's target table (e.g. elite SHT40 at half court: ~15% vs awake keeper, ~58% vs sleeping).

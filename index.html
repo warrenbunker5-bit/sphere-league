@@ -1082,14 +1082,17 @@ loadArt('ball','art/ball.png');loadArt('ballGlow','art/ball_glow.png');loadArt('
 const CREST_FILES={riptide:'lakewood_riptide',currents:'mile_high_currents',breakers:'boulder_breakers',anglers:'aurora_anglers',divers:'durango_divers',undertow:'pikes_peak_undertow'};
 for(const k in CREST_FILES)loadArt('crest_'+k,'art/crest_'+CREST_FILES[k]+'.png');
 function drawCrest(key,x,y,size,a=1){const im=ART['crest_'+key];if(!im)return false;ctx.save();ctx.globalAlpha*=a;ctx.imageSmoothingQuality='high';ctx.drawImage(im,x-size/2,y-size/2,size,size);ctx.restore();return true;}
-loadArt('swim_Human','art/swimmer_human.png');loadArt('swimMask_Human','art/swimmer_human_jersey.png');loadArt('jersey','art/portraits_jersey.png');
+// swimmer sprites by form (art/swimmer_<slug>.png + _jersey mask); forms without one fall back to the drawn swimmer
+const SWIM_SLUGS=['human','human_f','synthari_m','synthari_f','octarine','mantae','cartilagin','crustal','tree_frog','angler','trench'];
+const swimSlug=p=>{const f=p.form||(p.race==='synthari'?'Synthari':'Human');if(f==='Human')return p.sex==='f'&&SWIM_SLUGS.includes('human_f')?'human_f':'human';if(f==='Synthari')return 'synthari_'+(p.sex==='f'?'f':'m');return f.toLowerCase().replace(/ /g,'_');};
+SWIM_SLUGS.forEach(k=>{loadArt('swim_'+k,'art/swimmer_'+k+'.png');loadArt('swimMask_'+k,'art/swimmer_'+k+'_jersey.png');});loadArt('jersey','art/portraits_jersey.png');
 const PORTRAIT_KEYS=['Human_m','Human_f','Synthari_m','Synthari_f','Octarine','Mantae','Cartilagin','Crustal','Angler','Trench','Vanguard','Anaconda','Piranha','Amphibian','River Predator','Axolotl','Dragonfly','River Otter','Tree Frog'],PCELL=288,PCOLS=5,portraitCache={};
 // Element icon for a move id or element name ('whirl' shares the swirl icon)
 function iconOf(idOrEl){let el=ELEM[idOrEl]||idOrEl;if(el==='whirl')el='swirl';return ART['icon_'+el]||null;}
 function drawIcon(idOrEl,x,y,size){const im=iconOf(idOrEl);if(!im)return false;ctx.save();ctx.imageSmoothingQuality='high';ctx.drawImage(im,x-size/2,y-size/2,size,size);ctx.restore();return true;}
 // Tinted copy of a race form's 6-frame swimmer strip (jersey + shorts take the team color); null if that form has no sprite yet.
 const swimCache={};
-function swimmerFor(p,J){const form=p.form||'Human',im=ART['swim_'+form],mk=ART['swimMask_'+form];if(!im||!mk)return null;const ck=form+J;if(swimCache[ck])return swimCache[ck];
+function swimmerFor(p,J){const form=swimSlug(p),im=ART['swim_'+form],mk=ART['swimMask_'+form];if(!im||!mk)return null;const ck=form+J;if(swimCache[ck])return swimCache[ck];
   const c=document.createElement('canvas');c.width=768;c.height=128;const g=c.getContext('2d');g.drawImage(im,0,0);
   const t=document.createElement('canvas');t.width=768;t.height=128;const h=t.getContext('2d');h.drawImage(mk,0,0);
   const d=h.getImageData(0,0,768,128),a=d.data;for(let k=0;k<a.length;k+=4)a[k+3]=a[k];h.putImageData(d,0,0);
@@ -1602,7 +1605,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.18.1',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.19',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
 }
 function wrapTxt(s,x,y,w,size,col,maxLines=3,align='left'){ctx.font=size+'px '+FONT;const words=s.split(' ');let line='',n=0;
   for(const wd of words){const t=line?line+' '+wd:wd;if(ctx.measureText(t).width>w&&line){txt(line,x,y+n*size*1.35,size,col,align,{stroke:false});n++;line=wd;if(n>=maxLines)return n;}else line=t;}

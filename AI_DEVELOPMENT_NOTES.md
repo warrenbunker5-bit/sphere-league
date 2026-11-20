@@ -126,3 +126,9 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Exhibitions: none in the offseason; 2 XP-earning exhibitions per season week (`EX_XP_PER_WEEK`, tracked in `SAVE.exXp`). Extra exhibitions are practice only.
 - Statuses roll per touch (`FX_CHANCE` by move rank; sleep on keepers is lower). Only sleep stuns. Tests force the roll with `window.__FX_ALWAYS`.
 - Shots: any range under 260. `shotAccuracy` (wide roll) + `SHOT_FADE` (power loss with distance) + logistic keeper contest. Sleeping keepers get a 2-6% reflex save. Fitted to ChatGPT's target table (e.g. elite SHT40 at half court: ~15% vs awake keeper, ~58% vs sleeping).
+
+## v0.25 AI shooting (ChatGPT proposal, Warren-approved)
+- `aiShotBar`: minimum scoring odds the AI needs to shoot. Awake keeper 35% (20% if pressed); sleeping keeper 25% (10% with <5s); 12% with <6s on the shot clock; any real chance with <3s.
+- `aiBestShot`: the AI compares the real odds of a basic shot vs. each special and pays a small value cost for a special, so it doesn't burn them on easy goals.
+- Encounters: no distance gate; shots above the bar are weighted up.
+- 720-match sim vs v0.24: Anglers losses 43%->17%, Undertow 50%->20%. Boulder Breakers is still ~80% draws (very low scoring both ways) - matchup issue, not thresholds.

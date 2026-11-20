@@ -638,10 +638,18 @@ function startAiEnc(tk){
   popup(ch.label,c.x,c.y-30,'#ffb36b',8);if(!G.auto)sfx('enc');
 }
 function execChoice(c,ch,en,tk){if(ch.k==='break')doBreak(c,en,ch.mv,tk);else if(ch.k==='shot')doShot(c,en,ch.mv);else doPass(c,ch.m,en,ch.mv);}
+// AI shooting (v0.25, ChatGPT's thresholds): judge real scoring odds, not distance.
+// Min odds worth shooting at: awake 35% (20% if pressed), sleeping keeper 25% (10% late), any real chance under 3s of shot clock.
+function aiShotBar(c,press){const gk=gkOf(1-c.team),asleep=isOut(gk),pc=G.poss==null?99:G.poss;
+  if(pc<3)return 0.04;if(asleep)return pc<5?0.10:0.25;if(pc<6)return 0.12;return press<30?0.20:0.35;}
+// Best shot by odds; a special costs a little value so it isn't burned on an easy goal.
+function aiBestShot(c,engaged,n=30){let best=null;
+  for(const mv of [null,...movesOfType(c,'shot').filter(id=>canUse(c,id))]){const p=odds(()=>simShot(c,engaged,mv),n);const v=p-(mv?0.08:0)+(mv&&MOVES[mv].fx?0.03:0);if(!best||v>best.v)best={mv,p,v};}
+  return best;}
 function aiChoose(c,engaged,tk){
   const g=attackGoal(c.team),dg=dist(c,g),opts=[];
   for(const mv of [null,...movesOfType(c,'break').filter(id=>canUse(c,id))])opts.push({k:'break',mv,v:odds(()=>simBreak(c,engaged,mv,tk),40),label:mv?MOVES[mv].name.toUpperCase():'BREAK!'});
-  if(dg<105)for(const mv of [null,...movesOfType(c,'shot').filter(id=>canUse(c,id))]){const o=odds(()=>simShot(c,engaged,mv),40);opts.push({k:'shot',mv,v:o*(dg<90?1.7:1.0)+(mv&&MOVES[mv].fx?0.05:0),label:mv?MOVES[mv].name.toUpperCase():'SHOOT!'});}
+  {const bar=aiShotBar(c,0);for(const mv of [null,...movesOfType(c,'shot').filter(id=>canUse(c,id))]){const o=odds(()=>simShot(c,engaged,mv),40);opts.push({k:'shot',mv,v:(o>=bar?o*1.7:o)-(mv?0.08:0)+(mv&&MOVES[mv].fx?0.05:0),label:mv?MOVES[mv].name.toUpperCase():'SHOOT!'});}}
   const pm=movesOfType(c,'pass').filter(id=>canUse(c,id));
   for(const m of teamOf(c.team)){if(m===c||m.isGK)continue;const prog=(dg-dist(m,g))/80;
     for(const mv of [null,pm.length&&Math.random()<0.6?pm[(Math.random()*pm.length)|0]:null]){if(mv===null&&opts.some(o=>o.m===m&&o.mv===null))continue;const o=odds(()=>simPass(c,m,engaged,mv),30);opts.push({k:'pass',m,mv,v:o*0.85+prog*0.25+(mv&&MOVES[mv].fx?0.06:0),label:mv?MOVES[mv].name.toUpperCase():'PASS!'});}}
@@ -655,7 +663,7 @@ function aiCarrier(c,dt){
   if(c.isGK)return;
   if(c.think<=0){
     c.think=(c.team===1?G.away.ai.think:0.6)*(0.8+Math.random()*0.5);
-    if(dg<88&&press>9&&Math.random()<0.8||dg<118&&press>18&&Math.random()<0.45){const sm=movesOfType(c,'shot').filter(id=>canUse(c,id));doShot(c,[],sm.length&&Math.random()<0.6?sm[0]:null);return;}
+    if(press>9||G.poss<6){const b=aiBestShot(c,[]);if(b&&b.p>=aiShotBar(c,press)&&Math.random()<0.85){doShot(c,[],b.mv);return;}}
     if(press<45){for(const m of teamOf(c.team)){if(m===c||m.isGK)continue;if(dist(m,g)<dg-18){const o=odds(()=>simPass(c,m,[]),30);if(o>0.7&&Math.random()<0.75){const pm=movesOfType(c,'pass').filter(id=>canUse(c,id));doPass(c,m,[],pm.length&&Math.random()<0.4?pm[0]:null);return;}}}}
   }
   let vx=(g.x-c.x)/(dg||1),vy=(g.y-c.y)/(dg||1);
@@ -1787,7 +1795,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.24',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.25',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen

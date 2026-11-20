@@ -1183,7 +1183,9 @@ function kitPanel(x,y,w,h,r,edge='#34e3f6',a=1){
 function versus(a,ds,y){
   kitPanel(4,y,172,34,6);
   mini(a,6,y+1,80,false);mini(ds[0],94,y+1,80,true);
-  txt('VS',90,y+12,7,'#ffd24a');if(ds.length>1)txt('+'+(ds.length-1)+' DEF',90,y+22,4.6,'#ff8a8a','center',{stroke:false});
+  const ac=a.team===0?TEAMS.riptide.col:G.away.col,dc=ds[0].team===0?TEAMS.riptide.col:G.away.col;
+  ctx.save();ctx.strokeStyle=ac;ctx.lineWidth=1.4;ctx.beginPath();ctx.moveTo(9,y+2);ctx.lineTo(65,y+2);ctx.stroke();ctx.strokeStyle=dc;ctx.beginPath();ctx.moveTo(115,y+32);ctx.lineTo(171,y+32);ctx.stroke();ctx.restore();
+  ellipse(90,y+14,10,10,'#071a31','#ffd24a',1);txt('VS',90,y+14,7,'#ffd24a');if(ds.length>1)txt('+'+(ds.length-1)+' DEF',90,y+26,4.6,'#ff8a8a','center',{stroke:false});
 }
 function card(p,y,extra){
   kitPanel(4,y,172,34,6);
@@ -1195,8 +1197,9 @@ function card(p,y,extra){
   hpBar(120,y+3.5,52,p);txt('HP',117,y+5.3,4.6,'#9fb0e0','right',{stroke:false});spBar(120,y+9,52,p);txt('SP '+Math.floor(p.sp)+'/'+p.spMax,117,y+10.5,4.4,'#7fc4ff','right',{stroke:false});
   if(extra){txt(extra,33,y+18,6,'#ff8a8a','left');}
   else{
-    const ks=[['SPD','spd'],['END','end'],['ATK','atk'],['PAS','pas'],['BLK','blk'],['SHT','sht'],['CAT','cat']];
-    ks.forEach(([l,k],i)=>{const cx=33+(i%4)*36,cy=y+(i<4?18:27);txt(l,cx,cy,4.8,'#8fa0d8','left',{stroke:false});const v=Math.round(S(p,k));txt(v,cx+15,cy,6,v<p[k]?'#ff8a8a':'#ffffff','left',{sw:0.2});});
+    // Contextual attributes instead of seven tiny rows on a 180px-wide display.
+    const keys=p.isGK?[['CAT','cat'],['END','end'],['SPD','spd']]:G.state==='encounter'?[['PAS','pas'],['SHT','sht'],['END','end']]:[['SPD','spd'],['END','end'],['SHT','sht']];
+    keys.forEach(([l,k],i)=>{const cx=33+i*46,cy=y+23;txt(l,cx,cy,5,'#8fa0d8','left',{stroke:false});const v=Math.round(S(p,k));txt(v,cx+19,cy,6,v<p[k]?'#ff8a8a':'#ffffff','left',{sw:0.2});});
   }
   statusChips(p,174,y+28);
 }

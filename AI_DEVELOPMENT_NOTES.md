@@ -103,3 +103,13 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Approved art lives in `art/` and loads through `loadArt()` / `ART` in `index.html`. Every sprite has a procedural fallback, so the game still draws if an image fails to load.
 - `ball.png` / `ball_glow.png`; `sphere_interior.jpg` (drawn in world space, clipped to the sphere) and `sphere_backdrop.jpg` (screen backdrop, replaced the stadium).
 - `portraits.jpg` is a 5-column atlas of 288px cells in `PORTRAIT_KEYS` order; `portraits_jersey.png` is the matching jersey mask. `portraitFor()` tints the gray jersey to the team color and caches the result. Source sheets: Drive / Sphere League / 03 - Concepts In Review / portraits_A–E.png.
+
+## Art pass, v0.17–v0.19 (2026-11-19)
+- **Shot cutscene** (`drawSeq`): BEATEN beat on shots (DODGED stays for passes), slow-motion keeper showdown (`SEQ_GK`), keeper lunge/dive, goal ripple burst, save starburst + deflection, block ricochet. Outcome math is untouched.
+- **Encounter VS**: spinning team-color burst, VS emblem, stamped ENCOUNTER!, crest watermarks, portraits bob.
+- **Team colors** switched to the approved crest palettes (TEAMS col/acc/shorts/gk).
+- **UI kit**: `btn()` and `kitPanel()` draw the approved neon-edged style in code so any color works; buttons show a short pressed state.
+- **Icons**: `iconOf()` / `drawIcon()`; shown on move menus, status chips and the technique cut-in.
+- **Crests**: `drawCrest(teamKey,...)`; scoreboard, standings, title, VS.
+- **Swimmers**: `art/swimmer_<slug>.png` (6 frames: tread, tread, swim, swim, brace, asleep) + `_jersey.png` mask, listed in `SWIM_SLUGS`. Forms not listed fall back to the drawn swimmer. Synthari use an empty mask (their metal body is gray, so tinting would turn the whole body team-colored).
+- Source files: Drive / Sphere League / 03 - Concepts In Review.

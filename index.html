@@ -1046,8 +1046,8 @@ function drawPlayerBody(p){
     const engaged=['encounter','defEnc','aiEnc'].includes(G.state)&&(p===G.carrier||(G.enc&&G.enc.includes(p)));
     // Drive the stroke cycle from distance travelled, not an unrelated clock.
     // Preserve the existing six-frame art while the articulated rig is built.
-    p.strokePhase=(p.strokePhase||0)+Math.min(0.42,spd*0.011);
-    const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(p.strokePhase)%2):Math.floor(t*1.6)%2;
+    const strokeClock=t*(1.6+spd*0.08);
+    const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(strokeClock)%2):Math.floor(t*1.6)%2;
     const tgt=fr>=2&&fr<=3?clamp(Math.atan2(p.vy,Math.abs(p.vx)||0.01),-1.1,1.1):0;p.srot=(p.srot||0)+(tgt-(p.srot||0))*0.15;
     ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';
     // Distinct team-color backplate stays visible even when jersey mask is subtle.

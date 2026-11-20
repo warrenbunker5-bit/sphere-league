@@ -1028,8 +1028,8 @@ function drawPlayerBody(p){
   const td=p.team===0?TEAMS.riptide:G.away,J=p.isGK?td.gk:td.col,f=p.face?-1:1;
   const asleep=p.fx.sleep>0,t=p.anim,sw=asleep?0:Math.sin(t*2.2);
   const x=p.x,y=p.y+Math.sin(t*1.3)*0.6;
-  // base marker
-  ctx.globalAlpha=0.6;ellipse(p.x,p.y+10,6.5,2.3,alpha(J,0.45),J,0.8);ctx.globalAlpha=1;
+  // Keep the match floor visually quiet: selected carrier marker is drawn separately.
+  // No permanent underfoot halo for every athlete (crowds the 180x320 field).
   if(p===G.carrier){ctx.save();ctx.shadowColor='#ffd24a';ctx.shadowBlur=4*K;ellipse(p.x,p.y+10,7.5+Math.sin(G.time*6)*0.6,2.8,null,'#ffd24a',1.2);ctx.restore();}
   if(p.immune>0&&p===G.carrier&&Math.floor(G.time*12)%2)ctx.globalAlpha=0.75;
   const spd=Math.hypot(p.vx,p.vy),swim=asleep?0:clamp((spd-4)/14,0,1);
@@ -1040,7 +1040,7 @@ function drawPlayerBody(p){
     const engaged=['encounter','defEnc','aiEnc'].includes(G.state)&&(p===G.carrier||(G.enc&&G.enc.includes(p)));
     const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(t*3.4)%2):Math.floor(t*1.6)%2;
     const tgt=fr>=2&&fr<=3?clamp(Math.atan2(p.vy,Math.abs(p.vx)||0.01),-1.1,1.1):0;p.srot=(p.srot||0)+(tgt-(p.srot||0))*0.15;
-    ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';ctx.drawImage(swS,fr*128,0,128,128,-13,-13,26,26);ctx.restore();
+    ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';ctx.drawImage(swS,fr*128,0,128,128,-10.5,-10.5,21,21);ctx.restore();
   }else{
   ctx.save();ctx.translate(x,y);ctx.rotate(p.rot);
   {const x=0,y=0,stroke=swim>0.35;
@@ -1455,7 +1455,7 @@ function drawSeq(c,t,out){
     ctx.globalAlpha=out*(skip?0.35:1);
     const lab=d.rcv?'CATCH':d.gk?(c.asleep?'ASLEEP':'CAT'):'BLK';txt(P.name,d.x,d.y+r_(d)+7,4.6,'#ffffff','center',{sw:0.18});
     if(!hit)txt(lab,d.x,d.y-r_(d)-5,4.6,'#cfe3ff','center',{stroke:false});
-    else if(d.dodged){const k=clamp((t-d.at)/0.3,0,1);txt(c.kind==='shot'?'BEATEN!':'DODGED!',d.x,d.y-r_(d)-6-k*4,6,col,'center',{sw:0.25});}
+    else if(d.dodged){const k=clamp((t-d.at)/0.3,0,1);txt(c.kind==='shot'?'BEATEN!':'EVADED!',d.x,d.y-r_(d)-6-k*4,6,col,'center',{sw:0.25});}
     else if(d.gk){txt((c.asleep?'ZZZ ':'CAT ')+Math.round(d.v),d.x,d.y-r_(d)-6,6.5,c.ok?'#ff8a8a':'#ffd24a','center',{sw:0.25});}
     else if(d.rcv){txt('CAUGHT!',d.x,d.y-r_(d)-6,6.5,'#7dffb0','center',{sw:0.25});}
     else{const k=clamp((t-d.at)/0.35,0,1);txt('-'+Math.round(d.v),d.x+6,d.y-r_(d)-4-k*8,7,'#ff5a6e','center',{sw:0.3});}
@@ -1554,7 +1554,7 @@ function drawCut(){
     const statN={pass:'PAS',shot:'SHT',break:'END'}[c.kind];
     const rows=[];rows.push({p:A,lab:A.name+' '+statN+(c.mv?' + '+MOVES[c.mv].name:''),v:c.raw,sign:1,col:A.team===0?TEAMS.riptide.col:G.away.col,note:'HP '+Math.round(A.hp/A.end*100)+'%'});
     if(c.dl)rows.push({lab:'Distance',v:-c.dl,col:'#8fa0d8'});
-    for(const st_ of c.steps.slice(0,3))rows.push({p:st_.p,lab:st_.p.name+(st_.dodged?' - DODGED!':c.kind==='break'?' ATK':' BLK'),v:-st_.v,col:st_.p.team===0?TEAMS.riptide.col:G.away.col,note:['poison','sleep','weak','slow'].filter(k=>st_.p.fx[k]>0).map(k=>FX[k].name).join(' ')});
+    for(const st_ of c.steps.slice(0,3))rows.push({p:st_.p,lab:st_.p.name+(st_.dodged?(c.kind==='shot'?' - BEATEN!':' - EVADED!'):c.kind==='break'?' ATK':' BLK'),v:-st_.v,col:st_.p.team===0?TEAMS.riptide.col:G.away.col,note:['poison','sleep','weak','slow'].filter(k=>st_.p.fx[k]>0).map(k=>FX[k].name).join(' ')});
     if(c.gk)rows.push({p:c.gk,lab:c.gk.name+' CAT'+(c.asleep?' (ASLEEP)':''),v:-(c.gv||0),col:'#ffd24a'});
     const mx=Math.max(8,c.raw);let y=58;let left=0;
     rows.forEach((r,i)=>{const show=clamp((t-0.25-i*0.18)/0.25,0,1);if(show<=0)return;ctx.globalAlpha=out*show;

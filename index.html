@@ -1028,8 +1028,14 @@ function drawPlayerBody(p){
   const td=p.team===0?TEAMS.riptide:G.away,J=p.isGK?td.gk:td.col,f=p.face?-1:1;
   const asleep=p.fx.sleep>0,t=p.anim,sw=asleep?0:Math.sin(t*2.2);
   const x=p.x,y=p.y+Math.sin(t*1.3)*0.6;
-  // Keep the match floor visually quiet: selected carrier marker is drawn separately.
-  // No permanent underfoot halo for every athlete (crowds the 180x320 field).
+  // Team recognition pass: distinct cyan/amber silhouettes and marker shapes.
+  // The field is small, so identify athletes without requiring jersey-color perception.
+  if(!p.isGK){const own=p.team===0,markerY=p.y+10;
+    ctx.save();ctx.globalAlpha=0.86;ctx.strokeStyle=own?'#70f5ff':'#ffb36b';ctx.lineWidth=own?1.3:1;
+    if(own){ctx.beginPath();ctx.arc(p.x,markerY,5.6,0,Math.PI*2);ctx.stroke();}
+    else{ctx.setLineDash([2.4,2.4]);ctx.beginPath();ctx.moveTo(p.x-5.8,markerY);ctx.lineTo(p.x+5.8,markerY);ctx.stroke();ctx.setLineDash([]);}
+    ctx.restore();
+  }
   if(p===G.carrier){ctx.save();ctx.shadowColor='#ffd24a';ctx.shadowBlur=4*K;ellipse(p.x,p.y+10,7.5+Math.sin(G.time*6)*0.6,2.8,null,'#ffd24a',1.2);ctx.restore();}
   if(p.immune>0&&p===G.carrier&&Math.floor(G.time*12)%2)ctx.globalAlpha=0.75;
   const spd=Math.hypot(p.vx,p.vy),swim=asleep?0:clamp((spd-4)/14,0,1);
@@ -1038,9 +1044,16 @@ function drawPlayerBody(p){
   const swS=swimmerFor(p,J);
   if(swS){// approved swimmer sprite: 0-1 tread, 2-3 swim, 4 brace, 5 asleep
     const engaged=['encounter','defEnc','aiEnc'].includes(G.state)&&(p===G.carrier||(G.enc&&G.enc.includes(p)));
-    const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(t*3.4)%2):Math.floor(t*1.6)%2;
+    // Drive the stroke cycle from distance travelled, not an unrelated clock.
+    // Preserve the existing six-frame art while the articulated rig is built.
+    p.strokePhase=(p.strokePhase||0)+Math.min(0.42,spd*0.011);
+    const fr=asleep?5:(p.stun>0||engaged)?4:swim>0.35?2+(Math.floor(p.strokePhase)%2):Math.floor(t*1.6)%2;
     const tgt=fr>=2&&fr<=3?clamp(Math.atan2(p.vy,Math.abs(p.vx)||0.01),-1.1,1.1):0;p.srot=(p.srot||0)+(tgt-(p.srot||0))*0.15;
-    ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';ctx.drawImage(swS,fr*128,0,128,128,-10.5,-10.5,21,21);ctx.restore();
+    ctx.save();ctx.translate(x,y+0.5);ctx.scale(f,1);ctx.rotate(p.srot);ctx.imageSmoothingQuality='high';
+    // Distinct team-color backplate stays visible even when jersey mask is subtle.
+    ctx.fillStyle=p.team===0?'rgba(0,200,245,0.34)':'rgba(255,162,75,0.28)';
+    ctx.beginPath();ctx.ellipse(0,0,8,9,0,0,Math.PI*2);ctx.fill();
+    ctx.drawImage(swS,fr*128,0,128,128,-10.5,-10.5,21,21);ctx.restore();
   }else{
   ctx.save();ctx.translate(x,y);ctx.rotate(p.rot);
   {const x=0,y=0,stroke=swim>0.35;

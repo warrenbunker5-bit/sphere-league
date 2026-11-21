@@ -15,7 +15,8 @@
 - [x] Multi-round scouting with hidden stat ranges (v0.14)
 - [x] Rival clubs with real rosters that develop, scout, sign and release players; league news feed (v0.14)
 - [x] Move cinematics: technique cut-ins and shot/pass sequences where power ticks down past each defender (v0.14)
-- [ ] Choose who studies which opponent to copy moves
+- [x] Choose who studies which opponent to copy moves: pre-match Film Study (v0.28)
+- [x] Playoffs: top 4, semis and a Championship, sudden-death OT (v0.28)
 - [ ] Soft cap on dominant players
 - [ ] Signature move chains
 - [ ] Deeper balance testing: about 50 matches per opponent, at mid levels

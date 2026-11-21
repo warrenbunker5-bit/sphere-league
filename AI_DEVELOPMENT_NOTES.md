@@ -145,3 +145,9 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Bug: field players are pushed out of the crease (42 units), so a loose ball that settled there could only be taken by the keeper. If he was asleep, stunned or far off, nobody could reach it.
 - Fix: the defending keeper always chases a loose ball in his own crease and gets the first 1s. After that, or at once if he is down, the crease opens to the loose-ball chasers. A field player who grabs it is still pushed out of the crease with the ball.
 - Checked: keeper down, ball in crease: stuck 60/60 before, recovered 60/60 after (about 3.8s). Keeper awake: keeper still wins about 85%. cases.html 21/21; 40 auto matches, goals 199 vs 200.
+
+## v0.28 film study + playoffs (2026-11-21, Warren-approved)
+- Copying is intentional now. Before a match (FILM button on the season screen) you assign starters to study opponent starters. Slots: 2, 3 at Film Room 1, 4 at Film Room 3. Only a studier copies, only moves his slot can use, with no distance limit. Odds: 50% first sighting, +25% per miss, +10% per Film Room level. Random copying by nearby players is gone. Assignments are saved per opponent, so they carry into a playoff rematch.
+- Seasons end with playoffs. After the 5-week regular season the top 4 play semis (1v4, 2v3) and the winners meet in the Championship. Semi win $150, title $400 plus a Move Manual; regular-season place prizes are unchanged. Other playoff games are simulated (simKO). A non-playoff season still simulates the bracket and names a champion.
+- Playoff ties go to sudden-death OT (G.ot, G.half=3): next goal wins and both teams get +25% HP.
+- Checked: 12 auto seasons played (2 titles, then missed playoffs once contracts expired without renewal, which is a test artifact); forced OT; copy within 1-3 sightings; an unassigned opponent is never copied; cases 21/21; 40 auto matches unchanged.

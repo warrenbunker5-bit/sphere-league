@@ -140,3 +140,8 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - `gkPosBonus`: +5/12/20% for a keeper 10/20/35+u off the shot line, +25% if stranded. Stepping out on the line doesn't count. Fades to 0 at half court; not used vs sleeping keepers.
 - AI open-shot bar 35%->25%.
 - 720-match sim, total goals: Currents 2.7->3.5, Divers 2.8->3.6, Anglers 1.5->3.1, Undertow 1.0->2.3, Breakers 0.2->1.4.
+
+## v0.27 loose ball in the crease (2026-11-21, Warren bug report)
+- Bug: field players are pushed out of the crease (42 units), so a loose ball that settled there could only be taken by the keeper. If he was asleep, stunned or far off, nobody could reach it.
+- Fix: the defending keeper always chases a loose ball in his own crease and gets the first 1s. After that, or at once if he is down, the crease opens to the loose-ball chasers. A field player who grabs it is still pushed out of the crease with the ball.
+- Checked: keeper down, ball in crease: stuck 60/60 before, recovered 60/60 after (about 3.8s). Keeper awake: keeper still wins about 85%. cases.html 21/21; 40 auto matches, goals 199 vs 200.

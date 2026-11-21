@@ -170,6 +170,8 @@ const attackGoal=t=>t===0?goalTop:goalBot;
 const hpF=p=>0.5+0.5*p.hp/p.end;
 function S(p,k){let v=p[k];if(p.fx.weak>0&&['end','pas','sht','blk','cat'].includes(k))v*=0.6;if(p.fx.slow>0&&k==='spd')v*=0.45;return v;}
 const isOut=p=>p.stun>0||p.fx.sleep>0;
+// v0.27 loose ball in a crease: 0=top goal (team 1 keeps it), 1=bottom (team 0). Keeper gets first crack; after 1s, or at once if he's down, the crease opens to the scramble.
+const creaseIdx=(x,y)=>Math.hypot(x-CX,y-(CY-R))<CREASE?0:Math.hypot(x-CX,y-(CY+R))<CREASE?1:-1,creaseGK=i=>gkOf(i===0?1:0),creaseOpen=i=>{const L=G.loose;if(!L||L.cz!==i)return false;const k=creaseGK(i);return L.czT>1||!k||isOut(k);};
 const styleOf=t=>t===0?SAVE.tac:(G.away&&G.away.style)||{form:'balanced',cover:'zone'};
 const manCover=t=>styleOf(t).cover==='man';
 function rankOf(p,id){if(p.fixedRank)return p.fixedRank;const u=(p.uses&&p.uses[id])||0;return u>=8?3:u>=3?2:1;}
@@ -690,7 +692,7 @@ function updatePlayers(dt){
   if(c&&c.team===0)maxCh=Math.min(maxCh,G.away.ai.maxCh+(threat?1:0));
   const chasers=c&&!(c.team===0&&G.grace>0)?opp(c).filter(p=>!p.isGK&&!isOut(p)&&dist(p,c)<(threat?130:90)).sort((a,b)=>dist(a,c)-dist(b,c)).slice(0,maxCh):[];
   const gkCharge=c&&danger&&c.immune<=0&&!c.isGK?gkOf(1-c.team):null;
-  const L=G.loose,looseCh=new Set();if(L){for(const t of [0,1]){G.players.filter(q=>q.team===t&&!isOut(q)&&(!q.isGK||Math.hypot(q.x-L.x,q.y-L.y)<40)).sort((a,b)=>Math.hypot(a.x-L.x,a.y-L.y)/(10+S(a,'spd'))-Math.hypot(b.x-L.x,b.y-L.y)/(10+S(b,'spd'))).slice(0,2).forEach(q=>looseCh.add(q));}}
+  const L=G.loose,looseCh=new Set();if(L){for(const t of [0,1]){G.players.filter(q=>q.team===t&&!isOut(q)&&(!q.isGK||Math.hypot(q.x-L.x,q.y-L.y)<40||(L.cz>=0&&creaseGK(L.cz)===q))).sort((a,b)=>Math.hypot(a.x-L.x,a.y-L.y)/(10+S(a,'spd'))-Math.hypot(b.x-L.x,b.y-L.y)/(10+S(b,'spd'))).slice(0,2).forEach(q=>looseCh.add(q));}}
   for(const p of G.players){
     p.stun=Math.max(0,p.stun-dt);p.immune=Math.max(0,p.immune-dt);
     for(const k in p.fx)p.fx[k]=Math.max(0,p.fx[k]-dt);
@@ -720,7 +722,7 @@ function updatePlayers(dt){
     if(T){const dx=T.x-p.x,dy=T.y-p.y,d=Math.hypot(dx,dy);if(d>0.8){const sp=(10+S(p,'spd')*0.62)*sf*(p.stun>0?0.25:1)*(0.75+0.25*p.hp/p.end)*Math.min(1,d/8);dvx=dx/d*sp;dvy=dy/d*sp;}}
     const k=Math.min(1,dt*3.2);p.vx+=(dvx-p.vx)*k;p.vy+=(dvy-p.vy)*k;
     p.x+=p.vx*dt;p.y+=p.vy*dt;const s=clampSphere(p.x,p.y,p.isGK?6:7);p.x=s.x;p.y=s.y;
-    if(!p.isGK)for(const gy of [CY-R,CY+R]){const dx=p.x-CX,dy=p.y-gy,d=Math.hypot(dx,dy);if(d<CREASE){const k=CREASE/(d||1);p.x=CX+dx*k;p.y=gy+dy*k;if(p===G.carrier&&p.team===0&&p.target)p.target=null;}}
+    if(!p.isGK)for(const gy of [CY-R,CY+R]){if(looseCh.has(p)&&creaseOpen(gy<CY?0:1))continue;const dx=p.x-CX,dy=p.y-gy,d=Math.hypot(dx,dy);if(d<CREASE){const k=CREASE/(d||1);p.x=CX+dx*k;p.y=gy+dy*k;if(p===G.carrier&&p.team===0&&p.target)p.target=null;}}
     if(Math.abs(p.vx)>3)p.face=p.vx<0?1:0;
     if(!G.auto&&Math.hypot(p.vx,p.vy)>12&&Math.random()<dt*7)part({x:p.x-p.vx*0.28+rnd(-1,1),y:p.y-p.vy*0.28+rnd(-1,1),vx:rnd(-3,3),vy:-rnd(3,9),col:'rgba(235,252,255,0.9)',life:rnd(0.6,1.1),size:rnd(0.5,1.1),kind:'bub'});
     p.anim+=dt*(p.fx.sleep>0?0.6:(2.2+Math.hypot(p.vx,p.vy)*0.18));
@@ -819,7 +821,7 @@ function update(dt){
     G.clock-=dt;G.grace=Math.max(0,(G.grace||0)-dt);
     for(const p of G.players)for(const k in p.cd)p.cd[k]=Math.max(0,p.cd[k]-dt);
     updatePlayers(dt);const c=G.carrier;
-    if(G.state==='play'&&G.loose){const L=G.loose;L.t+=dt;L.x+=L.vx*dt;L.y+=L.vy*dt;L.vx*=0.985;L.vy*=0.985;
+    if(G.state==='play'&&G.loose){const L=G.loose;L.t+=dt;L.x+=L.vx*dt;L.y+=L.vy*dt;L.vx*=0.985;L.vy*=0.985;{const ci=creaseIdx(L.x,L.y);L.czT=ci>=0&&ci===L.cz?(L.czT||0)+dt:0;L.cz=ci;}
       const dd=Math.hypot(L.x-CX,L.y-CY);if(dd>R-6){const nx=(L.x-CX)/dd,ny=(L.y-CY)/dd;L.x=CX+nx*(R-6);L.y=CY+ny*(R-6);const dot=L.vx*nx+L.vy*ny;L.vx-=2*dot*nx;L.vy-=2*dot*ny;}
       for(const [k,v] of L.cool)L.cool.set(k,v-dt);
       const near=G.players.filter(q=>!isOut(q)&&!(L.cool.get(q)>0)&&Math.hypot(q.x-L.x,q.y-L.y)<5.5).sort((a,b)=>Math.hypot(a.x-L.x,a.y-L.y)-Math.hypot(b.x-L.x,b.y-L.y));
@@ -1804,7 +1806,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.26',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.27',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen

@@ -1616,7 +1616,8 @@ function rigPose(o){const pose=o.pose||'tread',ph=o.ph||0,s=Math.sin(ph*TAU),w=o
 const RIG_KEYS=['body','head','ua','ea','ua2','ea2','ta','ka','ta2','ka2','sx'];
 function drawRig(R,p,x,y,size,o){
   const mv=R.cfg.move||{};o=Object.assign({},o,{stroke:mv.stroke,ph:(o.ph||0)*(o.pose==='swim'?(mv.tempo||1):1)});
-  const T=rigPose(o),key='_rig'+(o.ctxKey||'');let C=p[key];const now=G.time;
+  const T=rigPose(o),PA=(R.cfg.poseAdd||{})[o.pose||'tread'];if(PA)for(const q in PA)if(typeof T[q]==='number')T[q]+=PA[q];// per-form signature tweaks (rig.json poseAdd)
+  const _T0=T,key='_rig'+(o.ctxKey||'');let C=p[key];const now=G.time;
   if(!C||now-C.t>0.5||o.snap){C=p[key]=Object.assign({},T);}
   const k=Math.min(1,(o.dt??(G.dtLast||0.016))*14);
   for(const q of RIG_KEYS)C[q]=q==='sx'?C[q]+(T[q]-C[q])*k:lerpA(C[q],T[q],q==='ua'||q==='ua2'?Math.min(1,k*1.6):k);
@@ -1629,17 +1630,17 @@ function drawRig(R,p,x,y,size,o){
   const arm=(ua,ea,far)=>{const e=limb('upper_arm',R.S[0],R.S[1],ua,far);limb(C.fist?'fist':'forearm',e[0],e[1],ua+ea,far);};
   const leg=(ta,ka,far)=>{const kn=limb('thigh',R.L[0],R.L[1],ta,far);limb('shin',kn[0],kn[1],ta+ka,far);};
   // segment chains (tails, tentacles, wings): each segment lags the one before (traveling wave), plus drag from body turns
-  const chains=lay=>{for(const ch of R.cfg.chains||[]){if((ch.layer||'back')!==lay)continue;const fp=P[ch.from],org=ch.from==='pelvis'?pl0:tr0;
+  const chains=(lay,head)=>{for(const ch of R.cfg.chains||[]){if((ch.layer||'back')!==lay||(ch.from==='head')!==!!head)continue;const org=ch.from==='pelvis'?pl0:ch.from==='head'?P[hk0].neck:tr0;
       let px=ch.pt[0]-org[0],py=ch.pt[1]-org[1];const sw=C.mix,amp=(C.sleep?0.25:0.8+0.4*sw),cph=(o.ph||0)*(ch.speed||1)+(ch.phase||0)+G.time*0.35*(1-sw);
       let a=ch.ang+((ch.swimAng??ch.ang)-ch.ang)*sw;
       ch.parts.forEach((nm,j)=>{a+=(ch.amp[j]||0)*amp*Math.sin(TAU*cph-j*(ch.lag||0))-clamp(C.bv*0.03,-0.35,0.35)*(j+1)*0.6;const e=limb(nm,px,py,a,!!ch.far);px=e[0];py=e[1];});}};
-  const pl0=P.pelvis.waist,tr0=P.torso.hip;
+  const pl0=P.pelvis.waist,tr0=P.torso.hip,hk0=C.sleep?'head_sleep':'head';
   chains('back');
   arm(C.ua2,C.ea2,true);leg(C.ta2,C.ka2,true);
   const pl=P.pelvis;ctx.drawImage(rigPart(R,'pelvis',J,false),-pl.waist[0],-pl.waist[1]);
   const tr=P.torso;ctx.save();ctx.scale(C.sx,2-C.sx);ctx.drawImage(rigPart(R,'torso',J,false),-tr.hip[0],-tr.hip[1]);ctx.restore();
   leg(C.ta,C.ka,false);
-  const hk=C.sleep?'head_sleep':'head',hd=P[hk];ctx.save();ctx.translate(R.N[0],R.N[1]);ctx.rotate(C.head);const hs=R.cfg.headScale||RIG_HEAD;ctx.scale(hs,hs);ctx.drawImage(R.img[hk],-hd.neck[0],-hd.neck[1]);ctx.restore();
+  const hk=C.sleep?'head_sleep':'head',hd=P[hk];ctx.save();ctx.translate(R.N[0],R.N[1]);ctx.rotate(C.head);const hs=R.cfg.headScale||RIG_HEAD;ctx.scale(hs,hs);chains('back',true);ctx.drawImage(R.img[hk],-hd.neck[0],-hd.neck[1]);chains('front',true);ctx.restore();
   arm(C.ua,C.ea,false);chains('front');
   ctx.restore();return true;}
 RIG_SLUGS.forEach(loadRig);
@@ -1869,7 +1870,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.30',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.31',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen

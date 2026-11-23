@@ -164,3 +164,4 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - rig.json additions: `headScale`, `move {tempo, stroke}`, `chains [{parts, from: torso|pelvis, pt, ang, swimAng, amp[], lag, speed, phase, layer, far}]`. Chain segment j angle = base + sum of amp*sin(2pi*phase - j*lag): a traveling wave from body to tip, plus a little drag when the body turns. Base angle blends to swimAng while swimming.
 - Swim strokes in `rigPose`: tailwhip (arms tucked, body undulates, tail drives), jet (both arms sweep together, squash pulse), undulate (arms out, slow).
 - Forms without a rig still use the 6-frame swimmer strips.
+- v0.31: rig.json `poseAdd` (per-form pose tweaks) and `from: head` chains; RIGGING.md + tools/sheets for rebuilding forms.

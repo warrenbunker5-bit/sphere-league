@@ -3,7 +3,7 @@
   "torso",
   "pelvis"
  ],
- "headScale": 1.15,
+ "headScale": 1.05,
  "move": {
   "tempo": 1.0,
   "stroke": "tailwhip"
@@ -27,8 +27,8 @@
    "layer": "back",
    "swimAng": 1.65,
    "pt": [
-    71,
-    107
+    65,
+    126
    ]
   }
  ],
@@ -36,131 +36,131 @@
   "head": {
    "file": "head.png",
    "neck": [
-    98,
-    203
+    182,
+    308
    ]
   },
   "head_sleep": {
    "file": "head_sleep.png",
    "neck": [
-    95,
-    203
+    182,
+    316
    ]
   },
   "torso": {
    "file": "torso.png",
    "neck": [
-    155,
-    20
+    228,
+    17
    ],
    "shoulder": [
-    80,
-    82
+    83,
+    137
    ],
    "hip": [
-    164,
-    316
+    228,
+    393
    ]
   },
   "pelvis": {
    "file": "pelvis.png",
    "waist": [
-    167,
-    21
+    216,
+    22
    ],
    "leg": [
-    135,
-    128
+    194,
+    155
    ]
   },
   "upper_arm": {
    "file": "upper_arm.png",
    "a": [
-    50,
-    60
+    68,
+    110
    ],
    "b": [
-    192,
-    58
+    264,
+    108
    ]
   },
   "forearm": {
    "file": "forearm.png",
    "a": [
-    60,
-    56
+    62,
+    106
    ],
    "b": [
-    265,
-    58
+    243,
+    109
    ]
   },
   "thigh": {
    "file": "thigh.png",
    "a": [
-    59,
-    97
+    77,
+    124
    ],
    "b": [
-    232,
-    101
+    302,
+    120
    ]
   },
   "shin": {
    "file": "shin.png",
    "a": [
-    57,
-    68
+    59,
+    92
    ],
    "b": [
-    220,
-    72
+    228,
+    91
    ]
   },
   "tail1": {
    "file": "tail1.png",
    "a": [
-    45,
-    88
+    51,
+    144
    ],
    "b": [
-    383,
-    94
+    551,
+    120
    ]
   },
   "tail2": {
    "file": "tail2.png",
    "a": [
-    32,
-    50
+    34,
+    88
    ],
    "b": [
-    328,
-    65
+    357,
+    77
    ]
   },
   "tail3": {
    "file": "tail3.png",
    "a": [
-    28,
-    48
+    32,
+    77
    ],
    "b": [
-    307,
-    30
+    364,
+    44
    ]
   },
   "fist": {
    "file": "forearm.png",
    "a": [
-    60,
-    56
+    62,
+    106
    ],
    "b": [
-    265,
-    58
+    243,
+    109
    ]
   }
  },
- "height": 837
+ "height": 1019
 }

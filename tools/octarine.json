@@ -3,7 +3,7 @@
   "torso",
   "pelvis"
  ],
- "headScale": 1.15,
+ "headScale": 1.05,
  "move": {
   "tempo": 1.4,
   "stroke": "jet"
@@ -14,8 +14,8 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.52,
-     0.66
+     0.6,
+     0.72
     ]
    }
   },
@@ -24,90 +24,105 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.52,
-     0.66
+     0.6,
+     0.72
     ]
    }
   },
   "torso": {
-   "i": 3,
+   "i": 2,
    "kind": "plain",
    "pts": {
     "neck": [
-     0.52,
-     0.06
+     0.55,
+     0.04
     ],
     "shoulder": [
-     0.27,
-     0.24
+     0.2,
+     0.33
     ],
     "hip": [
      0.55,
-     0.93
+     0.95
     ]
    }
   },
   "pelvis": {
-   "i": 8,
+   "i": 10,
    "kind": "plain",
    "pts": {
     "waist": [
-     0.52,
-     0.1
+     0.5,
+     0.08
     ],
     "leg": [
-     0.42,
-     0.6
+     0.45,
+     0.55
     ]
    }
   },
   "upper_arm": {
-   "i": 4,
+   "i": 3,
    "kind": "limb",
    "prox": "top"
   },
   "forearm": {
-   "i": 5,
+   "i": 6,
    "kind": "limb",
    "prox": "left",
-   "b": 0.9
+   "b": 0.6
   },
   "thigh": {
-   "i": 6,
+   "i": 9,
    "kind": "limb",
    "prox": "top"
   },
   "shin": {
-   "i": 7,
+   "i": 11,
    "kind": "limb",
    "prox": "top"
   },
-  "tent1": {
-   "i": 9,
-   "split": 2,
-   "names": [
-    "tent1a",
-    "tent1b"
-   ],
-   "prox": "left"
+  "tent1a": {
+   "i": 4,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.1,
+   "b": 0.9
   },
-  "tent2": {
-   "i": 10,
-   "split": 2,
-   "names": [
-    "tent2a",
-    "tent2b"
-   ],
-   "prox": "left"
+  "tent1b": {
+   "i": 5,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.08,
+   "b": 0.95
   },
-  "tent3": {
-   "i": 11,
-   "split": 2,
-   "names": [
-    "tent3a",
-    "tent3b"
-   ],
-   "prox": "left"
+  "tent2a": {
+   "i": 7,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.1,
+   "b": 0.9
+  },
+  "tent2b": {
+   "i": 8,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.08,
+   "b": 0.95
+  },
+  "tent3a": {
+   "i": 12,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.1,
+   "b": 0.9
+  },
+  "tent3b": {
+   "i": 13,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.08,
+   "b": 0.95
   }
  },
  "chains": [
@@ -119,7 +134,7 @@
    "from": "torso",
    "ptf": [
     0.3,
-    0.12
+    0.1
    ],
    "ang": 1.75,
    "amp": [
@@ -140,7 +155,7 @@
    "from": "torso",
    "ptf": [
     0.24,
-    0.16
+    0.14
    ],
    "ang": 2.25,
    "amp": [
@@ -161,7 +176,7 @@
    "from": "torso",
    "ptf": [
     0.2,
-    0.2
+    0.18
    ],
    "ang": 2.7,
    "amp": [
@@ -174,5 +189,6 @@
    "phase": 0.66,
    "swimAng": 1.75
   }
- ]
+ ],
+ "upscale": 1
 }

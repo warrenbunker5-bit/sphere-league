@@ -3,7 +3,7 @@
   "torso",
   "pelvis"
  ],
- "headScale": 1.1,
+ "headScale": 1.0,
  "move": {
   "tempo": 0.75,
   "stroke": "undulate"
@@ -11,22 +11,22 @@
  "chains": [
   {
    "parts": [
-    "wing"
+    "wing_far"
    ],
    "from": "torso",
    "ang": 2.6,
    "amp": [
-    0.28
+    0.38
    ],
    "lag": 0,
    "speed": 1,
    "layer": "back",
-   "far": true,
+   "far": false,
    "phase": 0.12,
-   "swimAng": 2.6,
+   "swimAng": 2.45,
    "pt": [
-    79,
-    62
+    117,
+    72
    ]
   },
   {
@@ -36,16 +36,16 @@
    "from": "torso",
    "ang": 2.1,
    "amp": [
-    0.28
+    -0.38
    ],
    "lag": 0,
    "speed": 1,
    "layer": "back",
    "phase": 0,
-   "swimAng": 2.2,
+   "swimAng": 0.75,
    "pt": [
-    79,
-    62
+    117,
+    72
    ]
   },
   {
@@ -62,8 +62,8 @@
    "layer": "back",
    "swimAng": 1.7,
    "pt": [
-    69,
-    103
+    61,
+    121
    ]
   }
  ],
@@ -71,120 +71,131 @@
   "head": {
    "file": "head.png",
    "neck": [
-    302,
-    217
+    248,
+    236
    ]
   },
   "head_sleep": {
    "file": "head_sleep.png",
    "neck": [
-    277,
-    212
+    249,
+    241
    ]
   },
   "torso": {
    "file": "torso.png",
    "neck": [
-    137,
-    18
+    215,
+    14
    ],
    "shoulder": [
-    71,
-    74
+    78,
+    118
    ],
    "hip": [
-    145,
-    286
+    215,
+    340
    ]
   },
   "pelvis": {
    "file": "pelvis.png",
    "waist": [
-    163,
+    202,
     21
    ],
    "leg": [
-    132,
-    124
+    182,
+    147
    ]
   },
   "upper_arm": {
    "file": "upper_arm.png",
    "a": [
-    48,
-    56
+    57,
+    83
    ],
    "b": [
-    185,
-    52
+    220,
+    80
    ]
   },
   "forearm": {
    "file": "forearm.png",
    "a": [
-    65,
-    56
+    52,
+    78
    ],
    "b": [
-    286,
-    56
+    201,
+    82
    ]
   },
   "thigh": {
    "file": "thigh.png",
    "a": [
-    56,
-    91
+    70,
+    112
    ],
    "b": [
-    216,
-    89
+    275,
+    110
    ]
   },
   "shin": {
    "file": "shin.png",
    "a": [
-    53,
-    77
+    57,
+    88
    ],
    "b": [
-    207,
+    224,
     88
+   ]
+  },
+  "wing_far": {
+   "file": "wing_far.png",
+   "a": [
+    39,
+    228
+   ],
+   "b": [
+    696,
+    168
    ]
   },
   "wing": {
    "file": "wing.png",
    "a": [
-    30,
-    107
+    37,
+    115
    ],
    "b": [
-    441,
-    88
+    669,
+    188
    ]
   },
   "tail1": {
    "file": "tail1.png",
    "a": [
-    21,
-    63
+    33,
+    79
    ],
    "b": [
-    304,
-    24
+    582,
+    49
    ]
   },
   "fist": {
    "file": "forearm.png",
    "a": [
-    65,
-    56
+    52,
+    78
    ],
    "b": [
-    286,
-    56
+    201,
+    82
    ]
   }
  },
- "height": 758
+ "height": 881
 }

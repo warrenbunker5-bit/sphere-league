@@ -165,3 +165,4 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Swim strokes in `rigPose`: tailwhip (arms tucked, body undulates, tail drives), jet (both arms sweep together, squash pulse), undulate (arms out, slow).
 - Forms without a rig still use the 6-frame swimmer strips.
 - v0.31: rig.json `poseAdd` (per-form pose tweaks) and `from: head` chains; RIGGING.md + tools/sheets for rebuilding forms.
+- v0.32: ChatGPT's full-res final sheets for Anaconda, Octarine, Mantae (opaque, ~1700 px). cut_form.py `hand` option joins a separate fist piece onto the forearm. Mantae has near/far wings that flap above and below the body when swimming.

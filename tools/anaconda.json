@@ -3,7 +3,7 @@
   "torso",
   "pelvis"
  ],
- "headScale": 1.15,
+ "headScale": 1.05,
  "move": {
   "tempo": 1.0,
   "stroke": "tailwhip"
@@ -14,8 +14,8 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.3,
-     0.86
+     0.42,
+     0.94
     ]
    }
   },
@@ -24,53 +24,53 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.3,
-     0.86
+     0.42,
+     0.94
     ]
    }
   },
   "torso": {
-   "i": 3,
+   "i": 2,
    "kind": "plain",
    "pts": {
     "neck": [
-     0.52,
-     0.06
+     0.55,
+     0.04
     ],
     "shoulder": [
-     0.27,
-     0.24
+     0.2,
+     0.33
     ],
     "hip": [
      0.55,
-     0.93
+     0.95
     ]
    }
   },
   "pelvis": {
-   "i": 8,
+   "i": 7,
    "kind": "plain",
    "pts": {
     "waist": [
-     0.52,
-     0.1
+     0.5,
+     0.08
     ],
     "leg": [
-     0.42,
-     0.6
+     0.45,
+     0.55
     ]
    }
   },
   "upper_arm": {
-   "i": 4,
+   "i": 3,
    "kind": "limb",
    "prox": "top"
   },
   "forearm": {
-   "i": 5,
+   "i": 4,
    "kind": "limb",
-   "prox": "left",
-   "b": 0.9
+   "prox": "top",
+   "hand": 5
   },
   "thigh": {
    "i": 6,
@@ -78,7 +78,7 @@
    "prox": "top"
   },
   "shin": {
-   "i": 7,
+   "i": 8,
    "kind": "limb",
    "prox": "top"
   },
@@ -86,15 +86,15 @@
    "i": 9,
    "kind": "limb",
    "prox": "left",
-   "a": 0.1,
-   "b": 0.88
+   "a": 0.08,
+   "b": 0.9
   },
   "tail2": {
    "i": 10,
    "kind": "limb",
    "prox": "left",
    "a": 0.08,
-   "b": 0.88
+   "b": 0.9
   },
   "tail3": {
    "i": 11,
@@ -113,8 +113,8 @@
    ],
    "from": "pelvis",
    "ptf": [
-    0.22,
-    0.5
+    0.15,
+    0.45
    ],
    "ang": 2.35,
    "amp": [
@@ -127,5 +127,6 @@
    "layer": "back",
    "swimAng": 1.65
   }
- ]
+ ],
+ "upscale": 1
 }

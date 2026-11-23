@@ -3,7 +3,7 @@
   "torso",
   "pelvis"
  ],
- "headScale": 1.1,
+ "headScale": 1.0,
  "move": {
   "tempo": 0.75,
   "stroke": "undulate"
@@ -14,8 +14,8 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.6,
-     0.86
+     0.46,
+     0.92
     ]
    }
   },
@@ -24,8 +24,8 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.6,
-     0.86
+     0.46,
+     0.92
     ]
    }
   },
@@ -34,30 +34,30 @@
    "kind": "plain",
    "pts": {
     "neck": [
-     0.52,
-     0.06
+     0.55,
+     0.04
     ],
     "shoulder": [
-     0.27,
-     0.24
+     0.2,
+     0.33
     ],
     "hip": [
      0.55,
-     0.93
+     0.95
     ]
    }
   },
   "pelvis": {
-   "i": 8,
+   "i": 9,
    "kind": "plain",
    "pts": {
     "waist": [
-     0.52,
-     0.1
+     0.5,
+     0.08
     ],
     "leg": [
-     0.42,
-     0.6
+     0.45,
+     0.55
     ]
    }
   },
@@ -69,38 +69,45 @@
   "forearm": {
    "i": 5,
    "kind": "limb",
-   "prox": "left",
-   "b": 0.9
+   "prox": "top",
+   "hand": 6
   },
   "thigh": {
-   "i": 6,
+   "i": 8,
    "kind": "limb",
    "prox": "top"
   },
   "shin": {
-   "i": 7,
+   "i": 10,
    "kind": "limb",
    "prox": "top"
   },
-  "wing": {
-   "i": 9,
+  "wing_far": {
+   "i": 2,
    "kind": "limb",
    "prox": "right",
-   "a": 0.06,
+   "a": 0.05,
+   "b": 0.95
+  },
+  "wing": {
+   "i": 7,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.05,
    "b": 0.95
   },
   "tail1": {
    "i": 11,
    "kind": "limb",
    "prox": "left",
-   "a": 0.06,
+   "a": 0.05,
    "b": 0.95
   }
  },
  "chains": [
   {
    "parts": [
-    "wing"
+    "wing_far"
    ],
    "from": "torso",
    "ptf": [
@@ -109,14 +116,14 @@
    ],
    "ang": 2.6,
    "amp": [
-    0.28
+    0.38
    ],
    "lag": 0,
    "speed": 1,
    "layer": "back",
-   "far": true,
+   "far": false,
    "phase": 0.12,
-   "swimAng": 2.6
+   "swimAng": 2.45
   },
   {
    "parts": [
@@ -129,13 +136,13 @@
    ],
    "ang": 2.1,
    "amp": [
-    0.28
+    -0.38
    ],
    "lag": 0,
    "speed": 1,
    "layer": "back",
    "phase": 0,
-   "swimAng": 2.2
+   "swimAng": 0.75
   },
   {
    "parts": [
@@ -143,8 +150,8 @@
    ],
    "from": "pelvis",
    "ptf": [
-    0.22,
-    0.5
+    0.15,
+    0.45
    ],
    "ang": 2.3,
    "amp": [
@@ -155,5 +162,6 @@
    "layer": "back",
    "swimAng": 1.7
   }
- ]
+ ],
+ "upscale": 1
 }

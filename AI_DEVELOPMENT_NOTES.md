@@ -166,3 +166,4 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Forms without a rig still use the 6-frame swimmer strips.
 - v0.31: rig.json `poseAdd` (per-form pose tweaks) and `from: head` chains; RIGGING.md + tools/sheets for rebuilding forms.
 - v0.32: ChatGPT's full-res final sheets for Anaconda, Octarine, Mantae (opaque, ~1700 px). cut_form.py `hand` option joins a separate fist piece onto the forearm. Mantae has near/far wings that flap above and below the body when swimming.
+- v0.33: rigs for human_f, synthari_m, synthari_f (ChatGPT finals). rig.json `tintMin`: only gray brighter than this gets team colour (Synthari: 200, so the white kit tints and the gray metal body doesn't). `move.snap`: servo timing - the stroke phase moves in n quick steps with holds (Synthari: 6). human_f tempo 1.12 (lighter, quicker crawl).

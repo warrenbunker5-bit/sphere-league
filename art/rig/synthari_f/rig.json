@@ -1,0 +1,111 @@
+{
+ "tint": [
+  "torso",
+  "pelvis"
+ ],
+ "headScale": 1.25,
+ "move": {
+  "tempo": 1.0,
+  "stroke": "crawl",
+  "snap": 6
+ },
+ "tintMin": 200,
+ "parts": {
+  "head": {
+   "file": "head.png",
+   "neck": [
+    266,
+    390
+   ]
+  },
+  "head_sleep": {
+   "file": "head_sleep.png",
+   "neck": [
+    267,
+    389
+   ]
+  },
+  "torso": {
+   "file": "torso.png",
+   "neck": [
+    155,
+    21
+   ],
+   "shoulder": [
+    104,
+    160
+   ],
+   "hip": [
+    172,
+    505
+   ]
+  },
+  "pelvis": {
+   "file": "pelvis.png",
+   "waist": [
+    170,
+    26
+   ],
+   "leg": [
+    153,
+    182
+   ]
+  },
+  "upper_arm": {
+   "file": "upper_arm.png",
+   "a": [
+    94,
+    88
+   ],
+   "b": [
+    378,
+    86
+   ]
+  },
+  "forearm": {
+   "file": "forearm.png",
+   "a": [
+    71,
+    80
+   ],
+   "b": [
+    208,
+    81
+   ]
+  },
+  "thigh": {
+   "file": "thigh.png",
+   "a": [
+    92,
+    116
+   ],
+   "b": [
+    360,
+    118
+   ]
+  },
+  "shin": {
+   "file": "shin.png",
+   "a": [
+    138,
+    96
+   ],
+   "b": [
+    409,
+    98
+   ]
+  },
+  "fist": {
+   "file": "forearm.png",
+   "a": [
+    71,
+    80
+   ],
+   "b": [
+    208,
+    81
+   ]
+  }
+ },
+ "height": 1309
+}

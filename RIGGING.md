@@ -23,6 +23,8 @@ upgraded without touching game code.
 - `move`: `tempo` (swim speed multiplier) and `stroke`: `crawl` (default), `tailwhip`, `jet` or `undulate`. New strokes are added in `rigPose`.
 - `chains`: tails, tentacles, wings, fins, lures, antennae. `{parts, from: torso|pelvis|head, pt, ang, swimAng, amp[], lag, speed, phase, layer: back|front, far}`.
   Each segment adds `amp[j]*sin(2pi*phase - j*lag)` to the one before (a traveling wave, base to tip), and lags slightly when the body turns. `ang` is used treading, `swimAng` swimming (radians in the body frame: 0 forward, pi/2 toward the feet). `from: head` chains move with the head.
+- `tintMin`: only gray pixels brighter than this get the team colour (default 70). Use it when the body itself is gray (Synthari metal).
+- `move.snap`: n steps per stroke cycle with quick moves and holds, for mechanical/servo motion.
 - `poseAdd`: per-form tweaks added to a pose's joint angles, e.g. `{"shoot":{"body":-0.2,"ua":0.3}}`, for signature moves.
 
 ## Adding or upgrading a form

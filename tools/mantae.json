@@ -1,0 +1,159 @@
+{
+ "tint": [
+  "torso",
+  "pelvis"
+ ],
+ "headScale": 1.1,
+ "move": {
+  "tempo": 0.75,
+  "stroke": "undulate"
+ },
+ "pieces": {
+  "head": {
+   "i": 0,
+   "kind": "plain",
+   "pts": {
+    "neck": [
+     0.6,
+     0.86
+    ]
+   }
+  },
+  "head_sleep": {
+   "i": 1,
+   "kind": "plain",
+   "pts": {
+    "neck": [
+     0.6,
+     0.86
+    ]
+   }
+  },
+  "torso": {
+   "i": 3,
+   "kind": "plain",
+   "pts": {
+    "neck": [
+     0.52,
+     0.06
+    ],
+    "shoulder": [
+     0.27,
+     0.24
+    ],
+    "hip": [
+     0.55,
+     0.93
+    ]
+   }
+  },
+  "pelvis": {
+   "i": 8,
+   "kind": "plain",
+   "pts": {
+    "waist": [
+     0.52,
+     0.1
+    ],
+    "leg": [
+     0.42,
+     0.6
+    ]
+   }
+  },
+  "upper_arm": {
+   "i": 4,
+   "kind": "limb",
+   "prox": "top"
+  },
+  "forearm": {
+   "i": 5,
+   "kind": "limb",
+   "prox": "left",
+   "b": 0.9
+  },
+  "thigh": {
+   "i": 6,
+   "kind": "limb",
+   "prox": "top"
+  },
+  "shin": {
+   "i": 7,
+   "kind": "limb",
+   "prox": "top"
+  },
+  "wing": {
+   "i": 9,
+   "kind": "limb",
+   "prox": "right",
+   "a": 0.06,
+   "b": 0.95
+  },
+  "tail1": {
+   "i": 11,
+   "kind": "limb",
+   "prox": "left",
+   "a": 0.06,
+   "b": 0.95
+  }
+ },
+ "chains": [
+  {
+   "parts": [
+    "wing"
+   ],
+   "from": "torso",
+   "ptf": [
+    0.3,
+    0.2
+   ],
+   "ang": 2.6,
+   "amp": [
+    0.28
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "far": true,
+   "phase": 0.12,
+   "swimAng": 2.6
+  },
+  {
+   "parts": [
+    "wing"
+   ],
+   "from": "torso",
+   "ptf": [
+    0.3,
+    0.2
+   ],
+   "ang": 2.1,
+   "amp": [
+    0.28
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "phase": 0,
+   "swimAng": 2.2
+  },
+  {
+   "parts": [
+    "tail1"
+   ],
+   "from": "pelvis",
+   "ptf": [
+    0.22,
+    0.5
+   ],
+   "ang": 2.3,
+   "amp": [
+    0.3
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "swimAng": 1.7
+  }
+ ]
+}

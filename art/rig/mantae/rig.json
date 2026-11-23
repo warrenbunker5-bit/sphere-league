@@ -1,0 +1,190 @@
+{
+ "tint": [
+  "torso",
+  "pelvis"
+ ],
+ "headScale": 1.1,
+ "move": {
+  "tempo": 0.75,
+  "stroke": "undulate"
+ },
+ "chains": [
+  {
+   "parts": [
+    "wing"
+   ],
+   "from": "torso",
+   "ang": 2.6,
+   "amp": [
+    0.28
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "far": true,
+   "phase": 0.12,
+   "swimAng": 2.6,
+   "pt": [
+    79,
+    62
+   ]
+  },
+  {
+   "parts": [
+    "wing"
+   ],
+   "from": "torso",
+   "ang": 2.1,
+   "amp": [
+    0.28
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "phase": 0,
+   "swimAng": 2.2,
+   "pt": [
+    79,
+    62
+   ]
+  },
+  {
+   "parts": [
+    "tail1"
+   ],
+   "from": "pelvis",
+   "ang": 2.3,
+   "amp": [
+    0.3
+   ],
+   "lag": 0,
+   "speed": 1,
+   "layer": "back",
+   "swimAng": 1.7,
+   "pt": [
+    69,
+    103
+   ]
+  }
+ ],
+ "parts": {
+  "head": {
+   "file": "head.png",
+   "neck": [
+    302,
+    217
+   ]
+  },
+  "head_sleep": {
+   "file": "head_sleep.png",
+   "neck": [
+    277,
+    212
+   ]
+  },
+  "torso": {
+   "file": "torso.png",
+   "neck": [
+    137,
+    18
+   ],
+   "shoulder": [
+    71,
+    74
+   ],
+   "hip": [
+    145,
+    286
+   ]
+  },
+  "pelvis": {
+   "file": "pelvis.png",
+   "waist": [
+    163,
+    21
+   ],
+   "leg": [
+    132,
+    124
+   ]
+  },
+  "upper_arm": {
+   "file": "upper_arm.png",
+   "a": [
+    48,
+    56
+   ],
+   "b": [
+    185,
+    52
+   ]
+  },
+  "forearm": {
+   "file": "forearm.png",
+   "a": [
+    65,
+    56
+   ],
+   "b": [
+    286,
+    56
+   ]
+  },
+  "thigh": {
+   "file": "thigh.png",
+   "a": [
+    56,
+    91
+   ],
+   "b": [
+    216,
+    89
+   ]
+  },
+  "shin": {
+   "file": "shin.png",
+   "a": [
+    53,
+    77
+   ],
+   "b": [
+    207,
+    88
+   ]
+  },
+  "wing": {
+   "file": "wing.png",
+   "a": [
+    30,
+    107
+   ],
+   "b": [
+    441,
+    88
+   ]
+  },
+  "tail1": {
+   "file": "tail1.png",
+   "a": [
+    21,
+    63
+   ],
+   "b": [
+    304,
+    24
+   ]
+  },
+  "fist": {
+   "file": "forearm.png",
+   "a": [
+    65,
+    56
+   ],
+   "b": [
+    286,
+    56
+   ]
+  }
+ },
+ "height": 758
+}

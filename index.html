@@ -1564,7 +1564,7 @@ function rigFor(p){return RIGS[swimSlug(p)]||null;}
 // A character drawn once in pieces (head, torso, pelvis, upper arm, forearm/fist, thigh, shin)
 // and animated by rotating the pieces at their joints. Config: art/rig/<slug>/rig.json.
 // Angles are in the body frame: 0 = forward, PI/2 = down (toward the feet), PI = back.
-const RIG_SLUGS=['human'],RIG_HEAD=1.3;// head drawn a bit big for a chunky cartoon read at small sizes
+const RIG_SLUGS=['human','anaconda','octarine','mantae'],RIG_HEAD=1.3;// head drawn a bit big for a chunky cartoon read at small sizes
 function loadRig(slug){
   fetch('art/rig/'+slug+'/rig.json').then(r=>r.ok?r.json():null).then(cfg=>{if(!cfg)return;
     const R={cfg,img:{},tint:{},slug};let n=0,done=0;
@@ -1572,7 +1572,7 @@ function loadRig(slug){
   }).catch(()=>{});
 }
 function prepRig(R){const P=R.cfg.parts;R.limb={};
-  for(const k of ['upper_arm','forearm','fist','thigh','shin']){const q=P[k];R.limb[k]={a:q.a,len:Math.hypot(q.b[0]-q.a[0],q.b[1]-q.a[1]),ang0:Math.atan2(q.b[1]-q.a[1],q.b[0]-q.a[0])};}
+  for(const k in P){const q=P[k];if(!q.a||!q.b)continue;R.limb[k]={a:q.a,len:Math.hypot(q.b[0]-q.a[0],q.b[1]-q.a[1]),ang0:Math.atan2(q.b[1]-q.a[1],q.b[0]-q.a[0])};}
   const t=P.torso;R.N=[t.neck[0]-t.hip[0],t.neck[1]-t.hip[1]];R.S=[t.shoulder[0]-t.hip[0],t.shoulder[1]-t.hip[1]];
   const pl=P.pelvis;R.L=[pl.leg[0]-pl.waist[0],pl.leg[1]-pl.waist[1]];
   R.C=[R.N[0]*0.5,(R.N[1]+R.L[1]+R.limb.thigh.len)*0.5];// body centre for placement
@@ -1597,7 +1597,11 @@ function rigPose(o){const pose=o.pose||'tread',ph=o.ph||0,s=Math.sin(ph*TAU),w=o
   if(pose==='swim'){const u=-Math.PI/2+ph*TAU,u2=u+Math.PI,rec=x=>{const m=((x%TAU)+TAU)%TAU;return m>Math.PI/2&&m<1.5*Math.PI?Math.sin((m-Math.PI/2))*-1.5:-0.25;};
     const k=Math.sin(ph*TAU*2),k2=Math.sin(ph*TAU*2-1.2);
     P={body:Math.PI/2+clamp(Math.atan2(o.vy||0,Math.abs(o.vx||0.01))*0.6,-0.6,0.6)+(o.lean||0),head:-0.6+(Math.floor(ph)%2?0.18*Math.max(0,Math.sin(ph*TAU)):0),
-      ua:u,ea:rec(u),ua2:u2,ea2:rec(u2),ta:Math.PI/2+0.28*k,ka:0.35+0.3*k2,ta2:Math.PI/2-0.28*k,ka2:0.35-0.3*k2,sx:1+0.035*Math.sin(ph*TAU*2),fist:false};}
+      ua:u,ea:rec(u),ua2:u2,ea2:rec(u2),ta:Math.PI/2+0.28*k,ka:0.35+0.3*k2,ta2:Math.PI/2-0.28*k,ka2:0.35-0.3*k2,sx:1+0.035*Math.sin(ph*TAU*2),fist:false};
+    // per-form stroke (rig.json move.stroke): the tail/tentacle/wing chains carry most of the motion
+    const st=o.stroke;if(st==='tailwhip'){const b=Math.sin(ph*TAU);Object.assign(P,{body:P.body+0.1*b,head:-0.55-0.08*b,ua:Math.PI/2+0.35,ea:-0.25,ua2:Math.PI/2+0.25,ea2:-0.3,ta:Math.PI/2+0.06*b,ka:0.15,ta2:Math.PI/2+0.02*b,ka2:0.2,sx:1});}
+    else if(st==='jet'){const e=(1+Math.sin(ph*TAU))/2,q=ease(e);Object.assign(P,{ua:-0.5+2.3*q,ea:-0.7*(1-q),ua2:-0.3+2.2*q,ea2:-0.6*(1-q),ta:Math.PI/2+0.25-0.3*q,ka:0.8-0.6*q,ta2:Math.PI/2+0.15-0.3*q,ka2:0.9-0.6*q,sx:1.07-0.12*q});}
+    else if(st==='undulate'){const b=Math.sin(ph*TAU*0.5);Object.assign(P,{body:P.body+0.06*b,ua:Math.PI/2-0.9+0.25*b,ea:-0.3,ua2:Math.PI/2-0.7-0.25*b,ea2:-0.35,ta:Math.PI/2+0.12*b,ka:0.3,ta2:Math.PI/2-0.12*b,ka2:0.3,sx:1});}}
   else if(pose==='tread'){P={body:0.12+(o.lean||0)*0.6,head:0.05*s,ua:0.55+0.4*s,ea:-0.6-0.3*s,ua2:0.8-0.4*s,ea2:-0.6+0.3*s,
       ta:Math.PI/2-0.55+0.25*s,ka:1.1+0.5*Math.sin(ph*TAU+1),ta2:Math.PI/2-0.55-0.25*s,ka2:1.1-0.5*Math.sin(ph*TAU+1),sx:1,fist:false};}
   else if(pose==='brace'||pose==='block'){const j=Math.sin(ph*TAU*3)*0.05;P={body:0.32+j,head:-0.15,ua:-0.15+j,ea:-0.95,ua2:0.05-j,ea2:-1.05,ta:Math.PI/2-0.75,ka:1.35,ta2:Math.PI/2-0.15,ka2:0.65,sx:1.03,fist:true};}
@@ -1611,22 +1615,32 @@ function rigPose(o){const pose=o.pose||'tread',ph=o.ph||0,s=Math.sin(ph*TAU),w=o
   return P;}
 const RIG_KEYS=['body','head','ua','ea','ua2','ea2','ta','ka','ta2','ka2','sx'];
 function drawRig(R,p,x,y,size,o){
+  const mv=R.cfg.move||{};o=Object.assign({},o,{stroke:mv.stroke,ph:(o.ph||0)*(o.pose==='swim'?(mv.tempo||1):1)});
   const T=rigPose(o),key='_rig'+(o.ctxKey||'');let C=p[key];const now=G.time;
   if(!C||now-C.t>0.5||o.snap){C=p[key]=Object.assign({},T);}
   const k=Math.min(1,(o.dt??(G.dtLast||0.016))*14);
   for(const q of RIG_KEYS)C[q]=q==='sx'?C[q]+(T[q]-C[q])*k:lerpA(C[q],T[q],q==='ua'||q==='ua2'?Math.min(1,k*1.6):k);
+  const dtc=Math.max(0.001,o.dt??(G.dtLast||0.016));C.bv=(C.bv||0)+((C.body-(C.pb??C.body))/dtc-(C.bv||0))*Math.min(1,dtc*6);C.pb=C.body;
+  C.mix=(C.mix??0)+(((o.pose==='swim')?1:0)-(C.mix??0))*Math.min(1,dtc*4);
   C.t=now;C.fist=T.fist;C.sleep=T.sleep;
   const J=o.J,P=R.cfg.parts,sc=size*0.82/R.cfg.height,f=o.face||1;
   ctx.save();ctx.translate(x,y);ctx.scale(f*sc,sc);ctx.rotate(C.body);ctx.translate(-R.C[0],-R.C[1]);ctx.imageSmoothingQuality='high';
   const limb=(name,px,py,ang,far)=>{const L=R.limb[name],im=rigPart(R,name,J,far);ctx.save();ctx.translate(px,py);ctx.rotate(ang-L.ang0);ctx.drawImage(im,-L.a[0],-L.a[1]);ctx.restore();return [px+Math.cos(ang)*L.len,py+Math.sin(ang)*L.len];};
   const arm=(ua,ea,far)=>{const e=limb('upper_arm',R.S[0],R.S[1],ua,far);limb(C.fist?'fist':'forearm',e[0],e[1],ua+ea,far);};
   const leg=(ta,ka,far)=>{const kn=limb('thigh',R.L[0],R.L[1],ta,far);limb('shin',kn[0],kn[1],ta+ka,far);};
+  // segment chains (tails, tentacles, wings): each segment lags the one before (traveling wave), plus drag from body turns
+  const chains=lay=>{for(const ch of R.cfg.chains||[]){if((ch.layer||'back')!==lay)continue;const fp=P[ch.from],org=ch.from==='pelvis'?pl0:tr0;
+      let px=ch.pt[0]-org[0],py=ch.pt[1]-org[1];const sw=C.mix,amp=(C.sleep?0.25:0.8+0.4*sw),cph=(o.ph||0)*(ch.speed||1)+(ch.phase||0)+G.time*0.35*(1-sw);
+      let a=ch.ang+((ch.swimAng??ch.ang)-ch.ang)*sw;
+      ch.parts.forEach((nm,j)=>{a+=(ch.amp[j]||0)*amp*Math.sin(TAU*cph-j*(ch.lag||0))-clamp(C.bv*0.03,-0.35,0.35)*(j+1)*0.6;const e=limb(nm,px,py,a,!!ch.far);px=e[0];py=e[1];});}};
+  const pl0=P.pelvis.waist,tr0=P.torso.hip;
+  chains('back');
   arm(C.ua2,C.ea2,true);leg(C.ta2,C.ka2,true);
   const pl=P.pelvis;ctx.drawImage(rigPart(R,'pelvis',J,false),-pl.waist[0],-pl.waist[1]);
   const tr=P.torso;ctx.save();ctx.scale(C.sx,2-C.sx);ctx.drawImage(rigPart(R,'torso',J,false),-tr.hip[0],-tr.hip[1]);ctx.restore();
   leg(C.ta,C.ka,false);
-  const hk=C.sleep?'head_sleep':'head',hd=P[hk];ctx.save();ctx.translate(R.N[0],R.N[1]);ctx.rotate(C.head);ctx.scale(RIG_HEAD,RIG_HEAD);ctx.drawImage(R.img[hk],-hd.neck[0],-hd.neck[1]);ctx.restore();
-  arm(C.ua,C.ea,false);
+  const hk=C.sleep?'head_sleep':'head',hd=P[hk];ctx.save();ctx.translate(R.N[0],R.N[1]);ctx.rotate(C.head);const hs=R.cfg.headScale||RIG_HEAD;ctx.scale(hs,hs);ctx.drawImage(R.img[hk],-hd.neck[0],-hd.neck[1]);ctx.restore();
+  arm(C.ua,C.ea,false);chains('front');
   ctx.restore();return true;}
 RIG_SLUGS.forEach(loadRig);
 
@@ -1855,7 +1869,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.29',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.30',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen

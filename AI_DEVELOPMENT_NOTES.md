@@ -157,3 +157,10 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Rocket Pass: SP 0.25 -> 0.45, pow 8 -> 5, bypass 40% -> 25%. Still near-certain vs 1-2 defenders; vs 3 now 71-88% (was 96-100%).
 - Undertow (final-week ALL-STAR) had the lowest stat multiplier of the strong teams (0.9 vs Anglers 0.95, Breakers 1.0), so its attack starved: 3.8 shots and 0.6 breaks a match vs Anglers' 7.6 and 3.3. mult -> 1.05. Auto player now wins 28-38% vs Undertow (was 69%); ChatGPT's target 35-45%.
 - 720-match sim, total goals: Currents 3.2, Divers 3.7, Breakers 1.6, Anglers 3.1, Undertow 2.6. cases 21/21.
+
+## v0.30 cut-out rig: Anaconda, Octarine, Mantae pilots (2026-11-23)
+- Sheets: ChatGPT pilots in Drive / Sphere League / 05 - Rig Parts / <slug>/ (*_parts_sheet_pilot_transparent.png, ~770 px wide, half the human sheet's resolution).
+- `tools/cut_form.py <sheet> <outdir> <spec.json>` cuts a sheet (specs in tools/*.json): finds pieces, rotates limbs flat (joint end left) by principal axis, places pivots at 20%/80% of length, splits touching tentacle segments at the narrowest column, upscales 2x. ChatGPT's "transparent" export fades light interiors to partial alpha (85%+ of each piece), so the cutter re-composites over white and makes the silhouette solid.
+- rig.json additions: `headScale`, `move {tempo, stroke}`, `chains [{parts, from: torso|pelvis, pt, ang, swimAng, amp[], lag, speed, phase, layer, far}]`. Chain segment j angle = base + sum of amp*sin(2pi*phase - j*lag): a traveling wave from body to tip, plus a little drag when the body turns. Base angle blends to swimAng while swimming.
+- Swim strokes in `rigPose`: tailwhip (arms tucked, body undulates, tail drives), jet (both arms sweep together, squash pulse), undulate (arms out, slow).
+- Forms without a rig still use the 6-frame swimmer strips.

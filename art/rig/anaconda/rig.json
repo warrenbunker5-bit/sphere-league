@@ -1,0 +1,166 @@
+{
+ "tint": [
+  "torso",
+  "pelvis"
+ ],
+ "headScale": 1.15,
+ "move": {
+  "tempo": 1.0,
+  "stroke": "tailwhip"
+ },
+ "chains": [
+  {
+   "parts": [
+    "tail1",
+    "tail2",
+    "tail3"
+   ],
+   "from": "pelvis",
+   "ang": 2.35,
+   "amp": [
+    0.14,
+    0.2,
+    0.26
+   ],
+   "lag": 0.9,
+   "speed": 1,
+   "layer": "back",
+   "swimAng": 1.65,
+   "pt": [
+    71,
+    107
+   ]
+  }
+ ],
+ "parts": {
+  "head": {
+   "file": "head.png",
+   "neck": [
+    98,
+    203
+   ]
+  },
+  "head_sleep": {
+   "file": "head_sleep.png",
+   "neck": [
+    95,
+    203
+   ]
+  },
+  "torso": {
+   "file": "torso.png",
+   "neck": [
+    155,
+    20
+   ],
+   "shoulder": [
+    80,
+    82
+   ],
+   "hip": [
+    164,
+    316
+   ]
+  },
+  "pelvis": {
+   "file": "pelvis.png",
+   "waist": [
+    167,
+    21
+   ],
+   "leg": [
+    135,
+    128
+   ]
+  },
+  "upper_arm": {
+   "file": "upper_arm.png",
+   "a": [
+    50,
+    60
+   ],
+   "b": [
+    192,
+    58
+   ]
+  },
+  "forearm": {
+   "file": "forearm.png",
+   "a": [
+    60,
+    56
+   ],
+   "b": [
+    265,
+    58
+   ]
+  },
+  "thigh": {
+   "file": "thigh.png",
+   "a": [
+    59,
+    97
+   ],
+   "b": [
+    232,
+    101
+   ]
+  },
+  "shin": {
+   "file": "shin.png",
+   "a": [
+    57,
+    68
+   ],
+   "b": [
+    220,
+    72
+   ]
+  },
+  "tail1": {
+   "file": "tail1.png",
+   "a": [
+    45,
+    88
+   ],
+   "b": [
+    383,
+    94
+   ]
+  },
+  "tail2": {
+   "file": "tail2.png",
+   "a": [
+    32,
+    50
+   ],
+   "b": [
+    328,
+    65
+   ]
+  },
+  "tail3": {
+   "file": "tail3.png",
+   "a": [
+    28,
+    48
+   ],
+   "b": [
+    307,
+    30
+   ]
+  },
+  "fist": {
+   "file": "forearm.png",
+   "a": [
+    60,
+    56
+   ],
+   "b": [
+    265,
+    58
+   ]
+  }
+ },
+ "height": 837
+}

@@ -151,3 +151,9 @@ Earlier roadmap items are in `ROADMAP.md`: wake-up runs, a single stamina bar, l
 - Seasons end with playoffs. After the 5-week regular season the top 4 play semis (1v4, 2v3) and the winners meet in the Championship. Semi win $150, title $400 plus a Move Manual; regular-season place prizes are unchanged. Other playoff games are simulated (simKO). A non-playoff season still simulates the bracket and names a champion.
 - Playoff ties go to sudden-death OT (G.ot, G.half=3): next goal wins and both teams get +25% HP.
 - Checked: 12 auto seasons played (2 titles, then missed playoffs once contracts expired without renewal, which is a test artifact); forced OT; copy within 1-3 sightings; an unassigned opponent is never copied; cases 21/21; 40 auto matches unchanged.
+
+## v0.29 move nerfs + Undertow (2026-11-23, Warren-approved)
+- Mirage: SP 0.45 -> 0.65. Extra defenders are no longer ignored; they get a glancing tackle (7% of normal instead of 45%). Beats 1/2/3 defenders about 67/43/29% vs Currents (was ~65% at any count).
+- Rocket Pass: SP 0.25 -> 0.45, pow 8 -> 5, bypass 40% -> 25%. Still near-certain vs 1-2 defenders; vs 3 now 71-88% (was 96-100%).
+- Undertow (final-week ALL-STAR) had the lowest stat multiplier of the strong teams (0.9 vs Anglers 0.95, Breakers 1.0), so its attack starved: 3.8 shots and 0.6 breaks a match vs Anglers' 7.6 and 3.3. mult -> 1.05. Auto player now wins 28-38% vs Undertow (was 69%); ChatGPT's target 35-45%.
+- 720-match sim, total goals: Currents 3.2, Divers 3.7, Breakers 1.6, Anglers 3.1, Undertow 2.6. cases 21/21.

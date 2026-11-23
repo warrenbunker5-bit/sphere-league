@@ -91,13 +91,13 @@ const MOVES={
   viper:{name:'Viper Pass',type:'pass',sp:0.35,pow:3,fx:'poison',col:'#7fe04a',desc:'Poisons any defender who touches it'},
   lullaby:{name:'Lullaby Pass',type:'pass',sp:0.5,pow:2,fx:'sleep',col:'#b58cff',desc:'Defenders who touch it may fall asleep'},
   hex:{name:'Hex Pass',type:'pass',sp:0.35,pow:2,fx:'weak',col:'#ff6fcf',desc:'Weakens anyone it hits by 40%'},
-  rocket:{name:'Rocket Pass',type:'pass',sp:0.25,pow:8,bypass:0.4,col:'#ffb13b',desc:'Huge power - 40% to blast past a defender on you'},
+  rocket:{name:'Rocket Pass',type:'pass',sp:0.45,pow:5,bypass:0.25,col:'#ffb13b',desc:'Huge power - 25% to blast past a defender on you'},
   curve:{name:'Curveball',type:'shot',sp:0.3,pow:2,special:'curve',bypass:0.5,col:'#5fd3ff',desc:'Bends around blockers - 50% to curl past a defender on you'},
   toxic:{name:'Toxic Shot',type:'shot',sp:0.4,pow:3,fx:'poison',col:'#7fe04a',desc:'Poisons blockers and the keeper'},
   dream:{name:'Dream Shot',type:'shot',sp:0.5,pow:2,fx:'sleep',col:'#b58cff',desc:'Keeper who touches it may fall asleep'},
   avalanche:{name:'Avalanche Shot',type:'shot',sp:0.65,pow:8,special:'multi',bypass:0.35,col:'#dff4ff',desc:'3-hit shot - halves blocks, keeps power from range'},
   spin:{name:'Spin Cycle',type:'break',sp:0.25,pow:6,col:'#5fd3ff',desc:'Big END boost when breaking a tackle'},
-  mirage:{name:'Mirage',type:'break',sp:0.45,pow:2,special:'mirage',col:'#ff6fcf',desc:'Only the first defender gets a tackle in'},
+  mirage:{name:'Mirage',type:'break',sp:0.65,pow:2,special:'mirage',col:'#ff6fcf',desc:'Extra defenders only get a glancing tackle'},
   sting:{name:'Sting Tackle',type:'tackle',sp:0.3,pow:2,fx:'poison',col:'#7fe04a',desc:'Poisons the ball carrier on contact'},
   anchor:{name:'Anchor Tackle',type:'tackle',sp:0.3,pow:2,fx:'slow',col:'#5fd3ff',desc:'Slows the ball carrier'},
   drain:{name:'Drain Tackle',type:'tackle',sp:0.25,pow:3,special:'drain',col:'#ff5a6e',desc:'Steals HP from the ball carrier'},
@@ -153,7 +153,7 @@ const TEAMS={
     names:['MORROW','PACE','DIAZ','KELLER','STROM','ABARA'],moves:[['curve'],[],['rocket'],['anchor'],[],['wall']]},
   divers:{style:{form:'spread',cover:'man'},name:'Durango Divers',short:'DUR',col:'#c92f38',acc:'#d8a547',shorts:'#671d28',gk:'#39c9e8',mult:0.88,tier:'ROOKIE',rank:1,ai:{chase:0.82,maxCh:1,think:1.0},
     names:['BOONE','CRUZ','EMERY','HALE','RIGGS','NASH'],moves:[[],['spin'],[],['sting'],[],[]]},
-  undertow:{style:{form:'press',cover:'man'},name:'Pikes Peak Undertow',short:'PPU',col:'#e5f4ff',acc:'#2859cc',shorts:'#254aa8',gk:'#ff8b32',mult:0.9,tier:'ALL-STAR',rank:3,ai:{chase:0.92,maxCh:2,think:0.7},
+  undertow:{style:{form:'press',cover:'man'},name:'Pikes Peak Undertow',short:'PPU',col:'#e5f4ff',acc:'#2859cc',shorts:'#254aa8',gk:'#ff8b32',mult:1.05,tier:'ALL-STAR',rank:3,ai:{chase:0.92,maxCh:2,think:0.7},
     names:['SABLE','KNOX','REYES','DRAKE','VANCE','HOLT'],moves:[['toxic'],['dream'],['viper','lullaby'],['sting'],['sleeper'],['wall']]}
 };
 const AWAY_BASE=[['LF',22,20,18,15,8,23,6],['RF',21,19,17,17,9,21,6],['MF',20,24,18,23,13,14,8],['LD',18,25,21,13,22,8,10],['RD',18,26,22,12,22,7,10],['GK',14,24,8,13,10,4,21]];
@@ -330,8 +330,8 @@ function lineBlockers(a,b,team,engaged,width){
 }
 function simBreak(c,defs,mv,tk){
   const atk=(S(c,'end')+powOf(c,mv))*rnd(0.85,1.15)*hpF(c);
-  let s=[...defs];if(mv&&MOVES[mv].special==='mirage')s=s.slice(0,1);// defs arrive closest-first (engagedOf)
-  let def=0;const steps=[];s.forEach((d,i)=>{let b=S(d,'atk');if(tk&&tk.p===d)b+=powOf(d,tk.id);const v=b*rnd(0.85,1.15)*(i?0.45:1)*hpF(d);def+=v;steps.push({p:d,v});});
+  let s=[...defs];const mir=mv&&MOVES[mv].special==='mirage';// defs arrive closest-first (engagedOf). v0.29: Mirage no longer erases extra defenders, it cuts them to a glancing tackle
+  let def=0;const steps=[];s.forEach((d,i)=>{let b=S(d,'atk');if(tk&&tk.p===d)b+=powOf(d,tk.id);const v=b*rnd(0.85,1.15)*(i?(mir?0.07:0.45):1)*hpF(d);def+=v;steps.push({p:d,v});});
   return {ok:atk>def,atk,def,top:s[0],steps};
 }
 function simPass(c,to,engaged,mv){
@@ -1855,7 +1855,7 @@ function drawTitle(){
   btn(92,206,70,18,'SCENES: '+sc,()=>{SAVE.scenes=SAVE.scenes==='quick'?'full':'quick';persist();},{col:'#3a3f6a',size:5.2,sub:'move cutscenes',subsize:3.8,subc:'#cfe3ff'});
   btn(18,229,144,15,'PACE: '+(SAVE.pace<0.9?'CALM':'CLASSIC')+'  (tap to switch)',()=>{SAVE.pace=SAVE.pace<0.9?1:0.8;persist();},{col:'#3a3f6a',size:5.5});
   const n=(SAVE.news||[])[0];if(n){txt('LATEST',18,255,4.6,'#ffb36b','left',{stroke:false});wrapTxt(n.t,18,263,144,4.6,n.col||'#ffffff',2);}
-  txt('PROTOTYPE v0.28',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
+  txt('PROTOTYPE v0.29',CX,H-14,5.5,'#6f6aa8','center',{stroke:false});
   drawResetAsk();
 }
 // New-career confirmation, shared by the title screen and the club screen
